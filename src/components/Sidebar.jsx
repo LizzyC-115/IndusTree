@@ -20,14 +20,15 @@ export default function Sidebar() {
         {/* Create Post Button */}
         <button
           onClick={() => setIsCreateModalOpen(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-2xl hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02]"
+          style={{ paddingTop: '24px', paddingBottom: '24px' }}
+          className="w-full flex items-center justify-center gap-2 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-2xl hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02]"
         >
           <Plus className="w-5 h-5" />
           Start Discussion
         </button>
 
         {/* Categories */}
-        <nav className="mt-8">
+        <nav style={{ marginTop: '48px' }}>
           <h3 className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
             Categories
           </h3>
@@ -56,7 +57,7 @@ export default function Sidebar() {
         </nav>
 
         {/* Quick Stats */}
-        <div className="mt-8 p-5 bg-white rounded-2xl shadow-sm border border-slate-100">
+        <div style={{ marginTop: '80px' }} className="p-5 bg-white rounded-2xl shadow-sm border border-slate-100">
           <h3 className="text-sm font-bold text-slate-800 mb-4">Community Stats</h3>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between items-center">
