@@ -1,0 +1,207 @@
+import { useState } from 'react';
+import { TreePine, Mail, Lock, User } from 'lucide-react';
+import { signInWithUsername, signUp } from '../firebase/auth';
+
+export default function Auth({ onLogin }) {
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({
+    email: '',
+    username: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        const result = await signInWithUsername(formData.username, formData.password);
+        if (result.success) {
+          onLogin(result.user);
+        } else {
+          setError(result.error);
+        }
+      } else {
+        if (!formData.email || !formData.username || !formData.password) {
+          setError('Please fill in all fields');
+          setLoading(false);
+          return;
+        }
+        const result = await signUp(formData.email, formData.password, formData.username, {
+          profileComplete: false
+        });
+        if (result.success) {
+          onLogin(result.user);
+        } else {
+          setError(result.error);
+        }
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-600 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-lg rounded-3xl shadow-2xl mb-4">
+            <TreePine className="w-9 h-9 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold text-white mb-2">IndusTree</h1>
+          <p className="text-indigo-100">Connect, discuss, and grow together</p>
+        </div>
+
+        {/* Auth Card */}
+        <div className="bg-white rounded-3xl shadow-2xl p-8">
+          {/* Toggle Tabs */}
+          <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl mb-8">
+            <button
+              onClick={() => setIsLogin(true)}
+              className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
+                isLogin
+                  ? 'bg-white text-indigo-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Login
+            </button>
+            <button
+              onClick={() => setIsLogin(false)}
+              className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
+                !isLogin
+                  ? 'bg-white text-indigo-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Sign Up
+            </button>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '50px', paddingLeft: '10px', paddingRight: '10px' }}>
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="your@email.com"
+                  required={!isLogin}
+                  className="w-full px-4 py-3.5 bg-slate-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Username
+              </label>
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="Enter your username"
+                required
+                className="w-full px-4 py-3.5 bg-slate-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+                required
+                className="w-full px-4 py-3.5 bg-slate-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
+              />
+            </div>
+
+            {error && (
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm">
+                {error}
+              </div>
+            )}
+
+            {isLogin && (
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="text-slate-600">Remember me</span>
+                </label>
+                <a href="#" className="text-indigo-600 hover:text-indigo-700 font-semibold">
+                  Forgot password?
+                </a>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Create Account')}
+            </button>
+          </form>
+
+          {/* Footer */}
+          <div className="mt-6 text-center text-sm text-slate-500">
+            {isLogin ? (
+              <p>
+                Don't have an account?{' '}
+                <button
+                  onClick={() => setIsLogin(false)}
+                  className="text-indigo-600 hover:text-indigo-700 font-semibold"
+                >
+                  Sign up
+                </button>
+              </p>
+            ) : (
+              <p>
+                Already have an account?{' '}
+                <button
+                  onClick={() => setIsLogin(true)}
+                  className="text-indigo-600 hover:text-indigo-700 font-semibold"
+                >
+                  Login
+                </button>
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Footer Text */}
+        <p className="text-center text-indigo-100 text-sm mt-8">
+          © 2024 IndusTree. All rights reserved.
+        </p>
+      </div>
+    </div>
+  );
+}

@@ -1,10 +1,11 @@
 import { TrendingUp, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { trendingTopics } from '../data/mockData';
+import RecommendedUsers from './RecommendedUsers';
 
-export default function TrendingSidebar() {
+export default function TrendingSidebar({ currentUser }) {
   return (
     <aside className="min-w-0">
-      <div className="sticky top-24">
+      <div className="sticky top-24 space-y-6">
         {/* Trending Topics */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
@@ -44,8 +45,11 @@ export default function TrendingSidebar() {
           </div>
         </div>
 
+        {/* Recommended Users */}
+        <RecommendedUsers currentUser={currentUser} />
+
         {/* Featured Banner */}
-        <div className="mt-6 p-6 bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-600 rounded-2xl text-white shadow-lg shadow-indigo-500/25">
+        <div className="p-6 bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-600 rounded-2xl text-white shadow-lg shadow-indigo-500/25">
           <h3 className="font-bold text-lg mb-2">Join the Community</h3>
           <p className="text-sm text-indigo-100 mb-5 leading-relaxed">
             Connect with professionals, share insights, and grow together.
@@ -56,7 +60,7 @@ export default function TrendingSidebar() {
         </div>
 
         {/* Footer Links */}
-        <div className="mt-6 px-2">
+        <div className="px-2">
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
             <a href="#" className="hover:text-indigo-600 transition-colors">About</a>
             <a href="#" className="hover:text-indigo-600 transition-colors">Help</a>
