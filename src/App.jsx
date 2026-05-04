@@ -89,7 +89,7 @@ function App() {
   }
 
   return (
-    <AppProvider>
+    <AppProvider currentUser={user}>
       <div className="min-h-screen bg-slate-50">
         <Header user={user} onLogout={handleLogout} />
         

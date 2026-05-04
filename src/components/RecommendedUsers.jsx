@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { Users, TrendingUp } from 'lucide-react';
+import { Users, TrendingUp, MessageCircle } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 
 export default function RecommendedUsers({ currentUser }) {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { openDmWithUser } = useApp();
 
   useEffect(() => {
     if (!currentUser) return;
@@ -122,36 +124,62 @@ export default function RecommendedUsers({ currentUser }) {
         <h3 className="font-bold text-slate-800">Recommended Connections</h3>
       </div>
       
-      <div className="space-y-3">
-        {recommendations.map((user, index) => (
-          <div
-            key={user.id}
-            className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-all cursor-pointer group"
-          >
-            {/* Avatar */}
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 group-hover:shadow-lg group-hover:shadow-indigo-500/30 transition-all">
-              {user.username?.[0]?.toUpperCase() || 'U'}
-            </div>
-            
-            {/* User Info */}
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-slate-800 text-sm truncate">
-                {user.username}
-              </p>
-              <p className="text-xs text-slate-500 truncate">
-                {user.major || 'Student'} {user.gradYear && `'${user.gradYear.slice(-2)}`}
-              </p>
-            </div>
+      <div className="space-y-2">
+        {recommendations.map((user, index) => {
+          const handleDmClick = (e) => {
+            e.stopPropagation();
+            openDmWithUser({
+              id: user.id,
+              name: user.username,
+              avatar: user.username?.[0]?.toUpperCase() || 'U',
+              bio: `${user.major || 'Student'} ${user.gradYear ? `'${user.gradYear.slice(-2)}` : ''}`,
+              yearsOnPlatform: 1,
+              karma: user.score || 100
+            });
+          };
 
-            {/* Match Score */}
-            {user.score > 0 && (
-              <div className="flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
-                <TrendingUp className="w-3 h-3" />
-                {user.score}%
+          return (
+            <div
+              key={user.id}
+              className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-all group"
+            >
+              {/* Avatar */}
+              <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-white font-semibold text-xs flex-shrink-0 group-hover:shadow-lg group-hover:shadow-indigo-500/30 transition-all">
+                {user.username?.[0]?.toUpperCase() || 'U'}
               </div>
-            )}
-          </div>
-        ))}
+              
+              {/* User Info */}
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-slate-800 text-sm truncate">
+                  {user.username}
+                </p>
+                <p className="text-xs text-slate-500 truncate">
+                  {user.major || 'Student'} {user.gradYear && `'${user.gradYear.slice(-2)}`}
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-1.5">
+                {/* Match Score */}
+                {user.score > 0 && (
+                  <div className="flex items-center gap-0.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md">
+                    <TrendingUp className="w-3 h-3" />
+                    {user.score}
+                  </div>
+                )}
+                
+                {/* DM Button */}
+                <button
+                  onClick={handleDmClick}
+                  className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                  title="Send DM"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {recommendations.length > 0 && (

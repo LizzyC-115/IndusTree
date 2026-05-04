@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { MessageCircle, Send, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { auth } from '../firebase/config';
 
 const formatThreadTimestamp = (timestamp) => {
   const date = new Date(timestamp);
@@ -18,17 +19,29 @@ export default function DirectMessagesModal() {
     sendDmMessage,
   } = useApp();
   const [draftMessage, setDraftMessage] = useState('');
+  const messagesEndRef = useRef(null);
+  const currentUserId = auth.currentUser?.uid;
 
   const sortedThreads = useMemo(
-    () =>
-      [...dmThreads].sort(
+    () => {
+      const sorted = [...dmThreads].sort(
         (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      ),
+      );
+      console.log('💬 DM Modal - Sorted threads:', sorted.length);
+      return sorted;
+    },
     [dmThreads]
   );
 
   const activeThread =
     sortedThreads.find((thread) => thread.id === activeDmThreadId) || sortedThreads[0] || null;
+  
+  console.log('💬 DM Modal - Active thread:', activeThread?.id, 'Messages:', activeThread?.messages?.length || 0);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [activeThread?.messages]);
 
   if (!isDmOpen) return null;
 
@@ -52,39 +65,51 @@ export default function DirectMessagesModal() {
           </div>
 
           <div className="overflow-y-auto p-2 space-y-1.5">
-            {sortedThreads.map((thread) => {
-              const lastMessage = thread.messages[thread.messages.length - 1];
-              const isActive = activeThread?.id === thread.id;
-              return (
-                <button
-                  key={thread.id}
-                  type="button"
-                  onClick={() => setActiveDmThread(thread.id)}
-                  className={`w-full text-left p-3 rounded-xl transition-all ${
-                    isActive ? 'bg-white border border-indigo-200 shadow-sm' : 'hover:bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
-                      {thread.participant.avatar}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-slate-800 truncate">
-                          {thread.participant.name}
-                        </p>
-                        <span className="text-xs text-slate-400 shrink-0">
-                          {formatThreadTimestamp(thread.updatedAt)}
-                        </span>
+            {sortedThreads.length > 0 ? (
+              sortedThreads.map((thread) => {
+                const lastMessage = thread.messages[thread.messages.length - 1];
+                const isActive = activeThread?.id === thread.id;
+                return (
+                  <button
+                    key={thread.id}
+                    type="button"
+                    onClick={() => setActiveDmThread(thread.id)}
+                    className={`w-full text-left p-3 rounded-xl transition-all ${
+                      isActive ? 'bg-white border border-indigo-200 shadow-sm' : 'hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                        {thread.participant.avatar}
                       </div>
-                      <p className="text-xs text-slate-500 truncate mt-0.5">
-                        {lastMessage ? lastMessage.text : 'No messages yet'}
-                      </p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-slate-800 truncate">
+                            {thread.participant.name}
+                          </p>
+                          <span className="text-xs text-slate-400 shrink-0">
+                            {formatThreadTimestamp(thread.updatedAt)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 truncate mt-0.5">
+                          {lastMessage ? lastMessage.text : 'No messages yet'}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-center p-6">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4">
+                  <MessageCircle className="w-8 h-8" />
+                </div>
+                <p className="text-sm text-slate-600 font-medium">No conversations yet</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Click on a user's profile to start a conversation
+                </p>
+              </div>
+            )}
           </div>
         </aside>
 
@@ -109,7 +134,7 @@ export default function DirectMessagesModal() {
                 {activeThread.messages.length > 0 ? (
                   <div className="space-y-4">
                     {activeThread.messages.map((message) => {
-                      const isYou = message.sender === 'You';
+                      const isYou = message.senderId === currentUserId;
                       return (
                         <div
                           key={message.id}
@@ -132,6 +157,7 @@ export default function DirectMessagesModal() {
                         </div>
                       );
                     })}
+                    <div ref={messagesEndRef} />
                   </div>
                 ) : (
                   <div className="h-full flex items-center justify-center text-center">

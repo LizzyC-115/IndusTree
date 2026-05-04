@@ -55,15 +55,56 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Users collection
     match /users/{userId} {
-      // Allow anyone to query users by username (needed for login)
-      allow read: if request.auth != null;
+      // Allow reading user documents for login (username lookup)
+      // This is safe because we don't expose sensitive data
+      allow read: if true;
       // Users can create their own document during signup
       allow create: if request.auth != null && request.auth.uid == userId;
       // Users can update their own data
       allow update: if request.auth != null && request.auth.uid == userId;
+      // Users can delete their own profile
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Add more rules for posts, comments, etc. as needed
+    // DM Threads collection
+    match /dmThreads/{threadId} {
+      // Only participants can read their DM threads
+      allow read: if request.auth != null && 
+                     request.auth.uid in resource.data.participants;
+      // Only authenticated users can create DM threads
+      allow create: if request.auth != null && 
+                      request.auth.uid in request.resource.data.participants;
+      // Only participants can update (send messages)
+      allow update: if request.auth != null && 
+                       request.auth.uid in resource.data.participants;
+      // Only participants can delete
+      allow delete: if request.auth != null && 
+                       request.auth.uid in resource.data.participants;
+    }
+    
+    // Posts collection (for future use)
+    match /posts/{postId} {
+      // Anyone authenticated can read posts
+      allow read: if request.auth != null;
+      // Only authenticated users can create posts
+      allow create: if request.auth != null;
+      // Only post author can update their post
+      allow update: if request.auth != null && request.auth.uid == resource.data.authorId;
+      // Only post author can delete their post
+      allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
+    }
+    
+    // Comments collection (for future use)
+    match /comments/{commentId} {
+      // Anyone authenticated can read comments
+      allow read: if request.auth != null;
+      // Only authenticated users can create comments
+      allow create: if request.auth != null;
+      // Only comment author can update their comment
+      allow update: if request.auth != null && request.auth.uid == resource.data.authorId;
+      // Only comment author can delete their comment
+      allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
+    }
   }
 }
 ```

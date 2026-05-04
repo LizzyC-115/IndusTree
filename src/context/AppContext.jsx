@@ -1,9 +1,10 @@
-import { createContext, useContext, useState } from 'react';
-import { initialPosts, initialDmThreads } from '../data/mockData';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { initialPosts } from '../data/mockData';
+import { subscribeToDmThreads, getOrCreateDmThread, sendDmMessage as sendFirebaseDm } from '../firebase/dms';
 
 const AppContext = createContext();
 
-export function AppProvider({ children }) {
+export function AppProvider({ children, currentUser }) {
   const [posts, setPosts] = useState(initialPosts);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
@@ -11,10 +12,64 @@ export function AppProvider({ children }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPost, setSelectedPost] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [dmThreads, setDmThreads] = useState(initialDmThreads);
+  const [dmThreads, setDmThreads] = useState([]);
   const [isDmOpen, setIsDmOpen] = useState(false);
-  const [activeDmThreadId, setActiveDmThreadId] = useState(initialDmThreads[0]?.id || null);
+  const [activeDmThreadId, setActiveDmThreadId] = useState(null);
   const [selectedProfileUser, setSelectedProfileUser] = useState(null);
+
+  // Subscribe to DM threads when user is authenticated
+  useEffect(() => {
+    if (!currentUser?.uid) {
+      console.log('⚠️ No user logged in, clearing DM threads');
+      setDmThreads([]);
+      return;
+    }
+
+    console.log('🔌 Subscribing to DM threads for user:', currentUser.uid);
+
+    const unsubscribe = subscribeToDmThreads(currentUser.uid, (threads) => {
+      console.log('📨 DM Threads updated from Firestore:', threads.length);
+      
+      // Transform Firestore threads to app format
+      const formattedThreads = threads.map(thread => {
+        const otherUserId = thread.participants.find(id => id !== currentUser.uid);
+        const otherUserData = thread.participantData?.[otherUserId] || {};
+        
+        console.log('Thread:', thread.id, 'Messages:', thread.messages?.length || 0, 'Other user:', otherUserData.name);
+        
+        return {
+          id: thread.id,
+          participant: {
+            id: otherUserId,
+            name: otherUserData.name || 'Unknown User',
+            avatar: otherUserData.avatar || '?',
+            bio: otherUserData.bio || 'Student contributor',
+            yearsOnPlatform: otherUserData.yearsOnPlatform || 1,
+            karma: otherUserData.karma || 100
+          },
+          messages: thread.messages || [],
+          updatedAt: thread.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+        };
+      });
+      
+      console.log('✅ Formatted threads:', formattedThreads.length);
+      setDmThreads(formattedThreads);
+      
+      // Set active thread if none selected and we have threads
+      setActiveDmThreadId(prev => {
+        if (!prev && formattedThreads.length > 0) {
+          console.log('🎯 Auto-selecting first thread:', formattedThreads[0].id);
+          return formattedThreads[0].id;
+        }
+        return prev;
+      });
+    });
+
+    return () => {
+      console.log('🔌 Unsubscribing from DM threads');
+      unsubscribe();
+    };
+  }, [currentUser?.uid]);
 
   const getPostedTimestamp = (post) => {
     if (typeof post.createdAt === 'number') return post.createdAt;
@@ -78,7 +133,12 @@ export function AppProvider({ children }) {
 
   const closeProfile = () => setSelectedProfileUser(null);
 
-  const openDmWithUser = (user) => {
+  const openDmWithUser = async (user) => {
+    if (!currentUser?.uid) {
+      console.error('Must be logged in to send DMs');
+      return;
+    }
+
     const normalizedUser = {
       id: user.id || formatUserId(user.name),
       name: user.name,
@@ -88,31 +148,34 @@ export function AppProvider({ children }) {
       karma: user.karma || 100,
     };
 
-    let targetThreadId = null;
+    // Open DM modal immediately
+    setIsDmOpen(true);
 
-    setDmThreads((prevThreads) => {
-      const existingThread = prevThreads.find(
+    try {
+      // Check if thread exists locally first
+      const existingThread = dmThreads.find(
         (thread) => thread.participant.id === normalizedUser.id
       );
 
       if (existingThread) {
-        targetThreadId = existingThread.id;
-        return prevThreads;
+        setActiveDmThreadId(existingThread.id);
+        return;
       }
 
-      const newThread = {
-        id: `thread-${Date.now()}`,
-        participant: normalizedUser,
-        messages: [],
-        updatedAt: new Date().toISOString(),
-      };
+      // Create or get thread from Firebase
+      const thread = await getOrCreateDmThread(
+        currentUser.uid,
+        normalizedUser.id,
+        normalizedUser,
+        currentUser  // Pass current user data
+      );
 
-      targetThreadId = newThread.id;
-      return [newThread, ...prevThreads];
-    });
-
-    setActiveDmThreadId(targetThreadId);
-    setIsDmOpen(true);
+      console.log('🎯 Setting active thread:', thread.id);
+      setActiveDmThreadId(thread.id);
+    } catch (error) {
+      console.error('Error opening DM:', error);
+      // Keep modal open even on error so user can see what happened
+    }
   };
 
   const openDmInbox = () => {
@@ -128,28 +191,21 @@ export function AppProvider({ children }) {
     setActiveDmThreadId(threadId);
   };
 
-  const sendDmMessage = (threadId, text) => {
+  const sendDmMessage = async (threadId, text) => {
     const trimmedText = text.trim();
-    if (!trimmedText) return;
+    if (!trimmedText || !currentUser?.uid) return;
 
-    setDmThreads((prevThreads) =>
-      prevThreads.map((thread) => {
-        if (thread.id !== threadId) return thread;
-
-        const newMessage = {
-          id: `m-${Date.now()}`,
-          sender: 'You',
-          text: trimmedText,
-          createdAt: new Date().toISOString(),
-        };
-
-        return {
-          ...thread,
-          messages: [...thread.messages, newMessage],
-          updatedAt: newMessage.createdAt,
-        };
-      })
-    );
+    try {
+      await sendFirebaseDm(
+        threadId,
+        currentUser.uid,
+        currentUser.username || 'You',
+        trimmedText
+      );
+      // Real-time listener will update the UI automatically
+    } catch (error) {
+      console.error('Error sending DM:', error);
+    }
   };
 
   const addComment = (postId, comment) => {
