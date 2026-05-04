@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { X, ChevronUp, ChevronDown, MessageSquare, Clock, Send, ArrowLeft } from 'lucide-react';
+import { ChevronUp, ChevronDown, MessageSquare, Clock, Send, ArrowLeft } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import UserActionMenu from './UserActionMenu';
 
 export default function PostDetail() {
   const { selectedPost, setSelectedPost, votePost, addComment } = useApp();
@@ -23,11 +24,14 @@ export default function PostDetail() {
 
   const getCategoryColor = (category) => {
     const colors = {
-      tech: 'bg-sky-100 text-sky-700',
-      career: 'bg-violet-100 text-violet-700',
       finance: 'bg-emerald-100 text-emerald-700',
-      education: 'bg-amber-100 text-amber-700',
-      lifestyle: 'bg-rose-100 text-rose-700',
+      consulting: 'bg-violet-100 text-violet-700',
+      pm: 'bg-indigo-100 text-indigo-700',
+      'swe-tech': 'bg-sky-100 text-sky-700',
+      quant: 'bg-teal-100 text-teal-700',
+      engineering: 'bg-orange-100 text-orange-700',
+      medicine: 'bg-rose-100 text-rose-700',
+      academia: 'bg-amber-100 text-amber-700',
       all: 'bg-slate-100 text-slate-700',
     };
     return colors[category] || colors.all;
@@ -35,14 +39,26 @@ export default function PostDetail() {
 
   const getCategoryName = (category) => {
     const names = {
-      tech: 'Technology',
-      career: 'Career',
       finance: 'Finance',
-      education: 'Education',
-      lifestyle: 'Lifestyle',
+      consulting: 'Consulting',
+      pm: 'PM',
+      'swe-tech': 'SWE/Tech',
+      quant: 'Quant',
+      engineering: 'Engineering',
+      medicine: 'Medicine',
+      academia: 'Academia',
       all: 'General',
     };
     return names[category] || 'General';
+  };
+
+  const postUser = {
+    id: selectedPost.author.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+    name: selectedPost.author,
+    avatar: selectedPost.avatar,
+    bio: `${getCategoryName(selectedPost.category)} recruiting`,
+    yearsOnPlatform: 2,
+    karma: Math.max(120, selectedPost.votes + 150),
   };
 
   return (
@@ -102,12 +118,14 @@ export default function PostDetail() {
               </h1>
 
               <div className="flex items-center gap-4 mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-white text-sm font-bold">
-                    {selectedPost.avatar}
+                <UserActionMenu user={postUser}>
+                  <div className="flex items-center gap-3 hover:bg-slate-50 rounded-xl px-2 py-1.5 transition-colors">
+                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-white text-sm font-bold">
+                      {selectedPost.avatar}
+                    </div>
+                    <span className="font-semibold text-slate-800">{selectedPost.author}</span>
                   </div>
-                  <span className="font-semibold text-slate-800">{selectedPost.author}</span>
-                </div>
+                </UserActionMenu>
                 <div className="flex items-center gap-1.5 text-slate-400">
                   <Clock className="w-4 h-4" />
                   <span className="text-sm font-medium">{selectedPost.timeAgo}</span>
@@ -170,7 +188,20 @@ export default function PostDetail() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="font-semibold text-slate-800">{comment.author}</span>
+                        <UserActionMenu
+                          user={{
+                            id: comment.author.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+                            name: comment.author,
+                            avatar: comment.avatar,
+                            bio: 'Student contributor',
+                            yearsOnPlatform: 1,
+                            karma: 120,
+                          }}
+                        >
+                          <span className="font-semibold text-slate-800 hover:text-indigo-600 transition-colors">
+                            {comment.author}
+                          </span>
+                        </UserActionMenu>
                         <span className="text-xs text-slate-400 font-medium">{comment.timeAgo}</span>
                       </div>
                       <p className="text-slate-600 text-sm leading-relaxed">{comment.content}</p>

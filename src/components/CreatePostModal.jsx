@@ -7,7 +7,7 @@ export default function CreatePostModal() {
   const { isCreateModalOpen, setIsCreateModalOpen, addPost } = useApp();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [category, setCategory] = useState('all');
+  const [category, setCategory] = useState('finance');
 
   if (!isCreateModalOpen) return null;
 
@@ -25,7 +25,7 @@ export default function CreatePostModal() {
 
     setTitle('');
     setContent('');
-    setCategory('all');
+    setCategory('finance');
     setIsCreateModalOpen(false);
   };
 
@@ -33,7 +33,7 @@ export default function CreatePostModal() {
     setIsCreateModalOpen(false);
     setTitle('');
     setContent('');
-    setCategory('all');
+    setCategory('finance');
   };
 
   return (
@@ -59,10 +59,10 @@ export default function CreatePostModal() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6">
-          {/* Category */}
+          {/* Industry */}
           <div className="mb-5">
             <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Category
+              Industry
             </label>
             <select
               value={category}
