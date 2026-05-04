@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import UserActionMenu from './UserActionMenu';
 
 export default function PostCard({ post }) {
-  const { setSelectedPost, votePost } = useApp();
+  const { setSelectedPost, votePost, commentCounts } = useApp();
   const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
 
   const getCategoryColor = (category) => {
@@ -51,9 +51,10 @@ export default function PostCard({ post }) {
       className={`bg-white rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-lg hover:shadow-slate-200/50 transition-all cursor-pointer group ${
         post.isPinned ? 'ring-2 ring-indigo-100 border-indigo-200' : ''
       }`}
+      style={{ margin: '0 2px' }}
       onClick={() => setSelectedPost(post)}
     >
-      <div className="p-6">
+      <div style={{ padding: '10px 24px' }}>
         <div className="flex gap-5">
           {/* Vote Section */}
           <div className="flex flex-col items-center gap-1 pt-1">
@@ -137,12 +138,7 @@ export default function PostCard({ post }) {
                 {/* Comments */}
                 <div className="flex items-center gap-2 text-slate-500">
                   <MessageSquare className="w-4 h-4" />
-                  <span className="text-sm font-medium">{post.commentCount}</span>
-                  {post.newComments > 0 && (
-                    <span className="text-xs text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded-md">
-                      {post.newComments} new
-                    </span>
-                  )}
+                  <span className="text-sm font-medium">{commentCounts?.[post.id] ?? 0}</span>
                 </div>
 
                 {/* Share Menu */}

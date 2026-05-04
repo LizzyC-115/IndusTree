@@ -3,7 +3,12 @@ import { MessageCircle, UserRound } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function UserActionMenu({ user, children }) {
-  const { openProfile, openDmWithUser } = useApp();
+  const { currentUser, openProfile, openDmWithUser, openMyProfile } = useApp();
+
+  // Check if this menu is for the currently logged-in user
+  const isOwnProfile =
+    currentUser &&
+    (currentUser.username === user?.name || currentUser.uid === user?.id);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -39,25 +44,27 @@ export default function UserActionMenu({ user, children }) {
           <button
             type="button"
             onClick={() => {
-              openProfile(user);
+              isOwnProfile ? openMyProfile() : openProfile(user);
               setIsOpen(false);
             }}
             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
           >
             <UserRound className="w-4 h-4" />
-            Profile
+            {isOwnProfile ? 'My Profile' : 'Profile'}
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              openDmWithUser(user);
-              setIsOpen(false);
-            }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
-          >
-            <MessageCircle className="w-4 h-4" />
-            DM User
-          </button>
+          {!isOwnProfile && (
+            <button
+              type="button"
+              onClick={() => {
+                openDmWithUser(user);
+                setIsOpen(false);
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+            >
+              <MessageCircle className="w-4 h-4" />
+              DM User
+            </button>
+          )}
         </div>
       )}
     </div>

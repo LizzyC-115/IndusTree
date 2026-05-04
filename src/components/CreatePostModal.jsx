@@ -45,9 +45,10 @@ export default function CreatePostModal() {
       />
       
       {/* Modal */}
-      <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl">
+      <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl" style={{ padding: '3px' }}>
+        <div className="rounded-2xl border border-slate-100 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+        <div className="flex items-center justify-between border-b border-slate-100" style={{ padding: '20px 24px' }}>
           <h2 className="text-xl font-bold text-slate-800">Start a Discussion</h2>
           <button
             onClick={handleClose}
@@ -58,7 +59,7 @@ export default function CreatePostModal() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit} style={{ padding: '20px 24px' }}>
           {/* Industry */}
           <div className="mb-5">
             <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -106,24 +107,25 @@ export default function CreatePostModal() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex items-center justify-end gap-3 flex-wrap">
             <button
               type="button"
               onClick={handleClose}
-              className="px-6 py-3 text-slate-600 font-semibold hover:bg-slate-100 rounded-xl transition-all"
+              className="px-5 py-2.5 text-slate-600 font-semibold hover:bg-slate-100 rounded-xl transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!title.trim() || !content.trim()}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/25"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="w-4 h-4" />
               Post Discussion
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );

@@ -49,7 +49,8 @@ export default function DirectMessagesModal() {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeDm} />
 
-      <div className="relative w-full max-w-6xl h-[88vh] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex">
+      <div className="relative w-full max-w-6xl h-[88vh] bg-white rounded-2xl shadow-2xl border border-slate-200" style={{ padding: '8px' }}>
+        <div className="flex h-full rounded-xl overflow-hidden border border-slate-100">
         <aside className="w-[300px] border-r border-slate-200 bg-slate-50/80 flex flex-col">
           <div className="px-4 py-3 border-b border-slate-200 bg-white">
             <div className="flex items-center justify-between">
@@ -162,9 +163,6 @@ export default function DirectMessagesModal() {
                 ) : (
                   <div className="h-full flex items-center justify-center text-center">
                     <div>
-                      <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
-                        <MessageCircle className="w-8 h-8" />
-                      </div>
                       <p className="text-sm text-slate-600 font-medium">No messages yet</p>
                       <p className="text-xs text-slate-400 mt-1">
                         Start the conversation with {activeThread.participant.name}.
@@ -207,6 +205,7 @@ export default function DirectMessagesModal() {
             </div>
           )}
         </section>
+        </div>
       </div>
     </div>
   );

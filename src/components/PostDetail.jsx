@@ -1,25 +1,71 @@
-import { useState } from 'react';
-import { ChevronUp, ChevronDown, MessageSquare, Clock, Send, ArrowLeft } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ChevronUp, ChevronDown, MessageSquare, Clock, Send, ArrowLeft, Bookmark } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import UserActionMenu from './UserActionMenu';
+import { subscribeToComments } from '../firebase/comments';
 
 export default function PostDetail() {
-  const { selectedPost, setSelectedPost, votePost, addComment } = useApp();
+  const { selectedPost, setSelectedPost, votePost, addComment, currentUser, savedPostIds, toggleSave } = useApp();
   const [newComment, setNewComment] = useState('');
+  const [firestoreComments, setFirestoreComments] = useState(null); // null = loading
+  const bottomRef = useRef(null);
+
+  // Subscribe to real-time comments whenever a post is opened
+  useEffect(() => {
+    if (!selectedPost) return;
+    setFirestoreComments(null); // reset to loading state
+    const unsubscribe = subscribeToComments(selectedPost.id, (comments) => {
+      // Drop optimistic placeholders once real data arrives from Firestore
+      setFirestoreComments((prev) => {
+        const hasOptimistic = prev?.some((c) => c.id?.startsWith('optimistic-'));
+        if (!hasOptimistic) return comments;
+        // Keep optimistic entries whose content isn't yet in the real list
+        const realContents = new Set(comments.map((c) => c.content));
+        const pendingOptimistic = prev.filter(
+          (c) => c.id?.startsWith('optimistic-') && !realContents.has(c.content),
+        );
+        return [...comments, ...pendingOptimistic];
+      });
+    });
+    return unsubscribe;
+  }, [selectedPost?.id]);
+
+  // Scroll to bottom when new comments arrive
+  useEffect(() => {
+    if (firestoreComments?.length) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [firestoreComments?.length]);
 
   if (!selectedPost) return null;
 
-  const handleSubmitComment = (e) => {
+  const displayName = currentUser?.username || 'You';
+  const displayAvatar = currentUser?.username?.[0]?.toUpperCase() || 'U';
+
+  const handleSubmitComment = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-
-    addComment(selectedPost.id, {
-      content: newComment.trim(),
-      author: 'You',
-      avatar: 'U',
-    });
-
+    const text = newComment.trim();
     setNewComment('');
+
+    // Optimistic local update — shows instantly before Firebase confirms
+    const optimistic = {
+      id: `optimistic-${Date.now()}`,
+      author: displayName,
+      avatar: displayAvatar,
+      content: text,
+      timeAgo: 'Just now',
+      votes: 0,
+      createdAt: new Date().toISOString(),
+    };
+    setFirestoreComments((prev) => [...(prev ?? []), optimistic]);
+
+    // Persist to Firebase; onSnapshot will replace optimistic entry with real doc
+    await addComment(selectedPost.id, {
+      content: text,
+      author: displayName,
+      avatar: displayAvatar,
+    });
   };
 
   const getCategoryColor = (category) => {
@@ -70,7 +116,7 @@ export default function PostDetail() {
       />
       
       {/* Panel */}
-      <div className="relative ml-auto w-full max-w-3xl bg-white shadow-2xl overflow-y-auto">
+      <div className="relative ml-auto w-full max-w-3xl bg-white shadow-2xl overflow-y-auto" style={{ paddingTop: '12px', paddingLeft: '12px', paddingRight: '12px' }}>
         {/* Header */}
         <div className="sticky top-0 bg-white/90 backdrop-blur-lg border-b border-slate-100 p-5 z-10">
           <button
@@ -86,11 +132,15 @@ export default function PostDetail() {
         <div className="p-8">
           {/* Post Header */}
           <div className="flex gap-5 mb-8">
-            {/* Vote */}
-            <div className="flex flex-col items-center gap-1">
+            {/* Vote + Save column */}
+            <div className="flex flex-col items-center gap-1 flex-shrink-0">
               <button
                 onClick={() => votePost(selectedPost.id, 'up')}
-                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                className={`p-2 rounded-xl transition-all ${
+                  selectedPost.userVote === 1
+                    ? 'text-indigo-600 bg-indigo-50'
+                    : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
+                }`}
               >
                 <ChevronUp className="w-6 h-6" />
               </button>
@@ -101,9 +151,30 @@ export default function PostDetail() {
               </span>
               <button
                 onClick={() => votePost(selectedPost.id, 'down')}
-                className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                className={`p-2 rounded-xl transition-all ${
+                  selectedPost.userVote === -1
+                    ? 'text-rose-500 bg-rose-50'
+                    : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50'
+                }`}
               >
                 <ChevronDown className="w-6 h-6" />
+              </button>
+
+              {/* Save button — spaced below votes */}
+              <div style={{ height: '10px' }} />
+              <button
+                onClick={() => toggleSave(selectedPost)}
+                title={savedPostIds?.has(String(selectedPost.id)) ? 'Unsave post' : 'Save post'}
+                className={`p-2 rounded-xl transition-all ${
+                  savedPostIds?.has(String(selectedPost.id))
+                    ? 'text-indigo-600 bg-indigo-50'
+                    : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
+                }`}
+              >
+                <Bookmark
+                  className="w-5 h-5"
+                  fill={savedPostIds?.has(String(selectedPost.id)) ? 'currentColor' : 'none'}
+                />
               </button>
             </div>
 
@@ -141,20 +212,20 @@ export default function PostDetail() {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-slate-100 my-10" />
+          <div className="border-t border-slate-100" style={{ marginTop: '36px', marginBottom: '36px' }} />
 
           {/* Comments Section */}
           <div>
             <h2 className="flex items-center gap-2 text-lg font-bold text-slate-800 mb-6">
               <MessageSquare className="w-5 h-5 text-indigo-500" />
-              Comments ({selectedPost.comments?.length || 0})
+              Comments ({firestoreComments === null ? '…' : firestoreComments.length})
             </h2>
 
             {/* Comment Form */}
             <form onSubmit={handleSubmitComment} className="mb-10">
               <div className="flex gap-4">
                 <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
-                  U
+                  {displayAvatar}
                 </div>
                 <div className="flex-1">
                   <textarea
@@ -168,7 +239,8 @@ export default function PostDetail() {
                     <button
                       type="submit"
                       disabled={!newComment.trim()}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-semibold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/25"
+                      style={{ padding: '10px 24px' }}
+                      className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-semibold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Send className="w-4 h-4" />
                       Comment
@@ -180,8 +252,10 @@ export default function PostDetail() {
 
             {/* Comments List */}
             <div className="space-y-6">
-              {selectedPost.comments?.length > 0 ? (
-                selectedPost.comments.map((comment) => (
+              {firestoreComments === null ? (
+                <div className="text-center py-8 text-slate-400 text-sm">Loading comments…</div>
+              ) : firestoreComments.length > 0 ? (
+                firestoreComments.map((comment) => (
                   <div key={comment.id} className="flex gap-4 p-4 bg-slate-50 rounded-2xl">
                     <div className="w-10 h-10 bg-gradient-to-br from-slate-400 to-slate-500 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
                       {comment.avatar}
@@ -217,14 +291,8 @@ export default function PostDetail() {
                     </div>
                   </div>
                 ))
-              ) : (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <MessageSquare className="w-8 h-8 text-slate-300" />
-                  </div>
-                  <p className="text-slate-500 font-medium">No comments yet. Be the first to share your thoughts!</p>
-                </div>
-              )}
+              ) : null}
+              <div ref={bottomRef} />
             </div>
           </div>
         </div>
