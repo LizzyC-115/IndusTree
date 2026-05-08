@@ -303,13 +303,6 @@ export const initialPosts = [
   },
 ];
 
-export const trendingTopics = [
-  { id: 1, name: 'Summer 2027 Internship Timelines', posts: 1234, change: 12 },
-  { id: 2, name: 'Resume Reviews', posts: 987, change: -3 },
-  { id: 3, name: 'Interview Prep Resources', posts: 856, change: 8 },
-  { id: 4, name: 'Offer Negotiation', posts: 743, change: 5 },
-  { id: 5, name: 'Networking Templates', posts: 698, change: -1 },
-];
 
 export const initialDmThreads = [
   {

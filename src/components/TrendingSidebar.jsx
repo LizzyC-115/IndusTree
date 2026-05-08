@@ -1,10 +1,52 @@
-import { TrendingUp, ArrowUp, ArrowDown } from 'lucide-react';
-import { trendingTopics } from '../data/mockData';
+import { useMemo } from 'react';
+import { TrendingUp } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 import RecommendedUsers from './RecommendedUsers';
+
+const CATEGORY_NAMES = {
+  finance: 'Finance',
+  consulting: 'Consulting',
+  pm: 'PM',
+  'swe-tech': 'SWE / Tech',
+  quant: 'Quant',
+  engineering: 'Engineering',
+  medicine: 'Medicine',
+  academia: 'Academia',
+};
 
 const VISIBLE_TOPICS = 3;
 
 export default function TrendingSidebar({ currentUser }) {
+  const { allPosts, commentCounts } = useApp();
+
+  const trendingTopics = useMemo(() => {
+    const byCategory = {};
+    allPosts.forEach((post) => {
+      if (post.isPinned || post.category === 'all') return;
+      if (!byCategory[post.category]) {
+        byCategory[post.category] = { postCount: 0, totalComments: 0, newComments: 0, totalVotes: 0 };
+      }
+      const comments = commentCounts[post.id] ?? post.commentCount ?? 0;
+      byCategory[post.category].postCount += 1;
+      byCategory[post.category].totalComments += comments;
+      byCategory[post.category].newComments += post.newComments || 0;
+      byCategory[post.category].totalVotes += post.votes || 0;
+    });
+
+    return Object.entries(byCategory)
+      .map(([catId, data]) => {
+        const trendScore = data.totalVotes + data.totalComments * 3;
+        return {
+          id: catId,
+          name: CATEGORY_NAMES[catId] || catId,
+          posts: data.postCount + data.totalComments,
+          trendScore,
+        };
+      })
+      .sort((a, b) => b.trendScore - a.trendScore)
+      .map(({ trendScore: _ts, ...rest }, idx) => ({ ...rest, rank: idx + 1 }));
+  }, [allPosts, commentCounts]);
+
   const shown = trendingTopics.slice(0, VISIBLE_TOPICS);
   const hidden = trendingTopics.slice(VISIBLE_TOPICS);
 
@@ -22,16 +64,16 @@ export default function TrendingSidebar({ currentUser }) {
 
         {/* Always-visible top 3 */}
         <div className="divide-y divide-slate-50">
-          {shown.map((topic, index) => (
-            <TopicRow key={topic.id} topic={topic} index={index} />
+          {shown.map((topic) => (
+            <TopicRow key={topic.id} topic={topic} />
           ))}
         </div>
 
         {/* Scrollable overflow for the rest */}
         {hidden.length > 0 && (
           <div className="max-h-40 overflow-y-auto divide-y divide-slate-50 border-t border-slate-100">
-            {hidden.map((topic, index) => (
-              <TopicRow key={topic.id} topic={topic} index={VISIBLE_TOPICS + index} />
+            {hidden.map((topic) => (
+              <TopicRow key={topic.id} topic={topic} />
             ))}
           </div>
         )}
@@ -58,22 +100,14 @@ export default function TrendingSidebar({ currentUser }) {
   );
 }
 
-function TopicRow({ topic, index }) {
+function TopicRow({ topic }) {
   return (
     <div style={{ padding: '2px 5px' }} className="hover:bg-slate-50 cursor-pointer transition-all">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <span className="text-xs font-bold text-slate-300">#{index + 1}</span>
+          <span className="text-xs font-bold text-slate-300">#{topic.rank}</span>
           <h3 className="text-sm font-semibold text-slate-800 mt-0.5 truncate">{topic.name}</h3>
           <p className="text-xs text-slate-400 mt-1">{topic.posts.toLocaleString()} posts</p>
-        </div>
-        <div className={`flex items-center gap-0.5 text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${
-          topic.change > 0 ? 'text-emerald-700 bg-emerald-50' : topic.change < 0 ? 'text-rose-700 bg-rose-50' : 'text-slate-500 bg-slate-100'
-        }`}>
-          {topic.change > 0
-            ? <ArrowUp className="w-3 h-3" />
-            : <ArrowDown className="w-3 h-3" />}
-          {Math.abs(topic.change)}%
         </div>
       </div>
     </div>
