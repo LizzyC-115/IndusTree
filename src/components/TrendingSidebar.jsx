@@ -51,19 +51,46 @@ export default function TrendingSidebar({ currentUser }) {
   const hidden = trendingTopics.slice(VISIBLE_TOPICS);
 
   return (
-    <aside className="min-w-0 flex flex-col gap-4 min-h-full" style={{ paddingTop: '18px', paddingBottom: '18px', paddingLeft: '10px', paddingRight: '10px' }}>
+    <aside
+      className="min-w-0 flex flex-col gap-4 min-h-full"
+      style={{
+        paddingTop: '18px',
+        paddingBottom: '18px',
+        paddingLeft: '10px',
+        paddingRight: '10px',
+        minWidth: 0,
+        overflow: 'hidden',
+        boxSizing: 'border-box',
+      }}
+    >
 
       {/* Trending Topics */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div style={{ padding: '12px 16px' }} className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
-          <h2 className="flex items-center gap-2 font-bold text-slate-800 text-sm">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden" style={{ minWidth: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '12px 16px', minWidth: 0, overflow: 'hidden' }} className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+          <h2
+            className="flex items-center gap-2 font-bold text-slate-800 text-sm"
+            style={{ minWidth: 0, overflow: 'hidden', wordBreak: 'break-word', overflowWrap: 'break-word' }}
+          >
             <TrendingUp className="w-4 h-4 text-rose-500" />
-            Trending Topics
+            <span
+              style={{
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+                minWidth: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: '100%',
+                display: 'block',
+              }}
+            >
+              Trending Topics
+            </span>
           </h2>
         </div>
 
         {/* Always-visible top 3 */}
-        <div className="divide-y divide-slate-50">
+        <div className="divide-y divide-slate-50" style={{ minWidth: 0, overflow: 'hidden' }}>
           {shown.map((topic) => (
             <TopicRow key={topic.id} topic={topic} />
           ))}
@@ -71,7 +98,10 @@ export default function TrendingSidebar({ currentUser }) {
 
         {/* Scrollable overflow for the rest */}
         {hidden.length > 0 && (
-          <div className="max-h-40 overflow-y-auto divide-y divide-slate-50 border-t border-slate-100">
+          <div
+            className="max-h-40 overflow-y-auto divide-y divide-slate-50 border-t border-slate-100"
+            style={{ overflowY: 'auto', overflowX: 'hidden', minWidth: 0 }}
+          >
             {hidden.map((topic) => (
               <TopicRow key={topic.id} topic={topic} />
             ))}
@@ -86,14 +116,16 @@ export default function TrendingSidebar({ currentUser }) {
       <RecommendedUsers currentUser={currentUser} />
 
       {/* Footer */}
-      <div className="px-2 pb-1">
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
+      <div className="px-2 pb-1" style={{ minWidth: 0, overflow: 'hidden' }}>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400" style={{ minWidth: 0, overflow: 'hidden' }}>
           <a href="#" className="hover:text-indigo-600 transition-colors">About</a>
           <a href="#" className="hover:text-indigo-600 transition-colors">Help</a>
           <a href="#" className="hover:text-indigo-600 transition-colors">Privacy</a>
           <a href="#" className="hover:text-indigo-600 transition-colors">Terms</a>
         </div>
-        <p className="text-xs text-slate-300 mt-2">© 2024 IndusTree</p>
+        <p className="text-xs text-slate-300 mt-2" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+          © 2024 IndusTree
+        </p>
       </div>
 
     </aside>
@@ -102,12 +134,40 @@ export default function TrendingSidebar({ currentUser }) {
 
 function TopicRow({ topic }) {
   return (
-    <div style={{ padding: '2px 5px' }} className="hover:bg-slate-50 cursor-pointer transition-all">
-      <div className="flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <span className="text-xs font-bold text-slate-300">#{topic.rank}</span>
-          <h3 className="text-sm font-semibold text-slate-800 mt-0.5 truncate">{topic.name}</h3>
-          <p className="text-xs text-slate-400 mt-1">{topic.posts.toLocaleString()} posts</p>
+    <div
+      style={{ padding: '13px 18px', minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}
+      className="hover:bg-slate-50 cursor-pointer transition-all"
+    >
+      <div className="flex items-center justify-between gap-4" style={{ minWidth: 0, overflow: 'hidden' }}>
+        <div className="min-w-0" style={{ minWidth: 0, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', minWidth: 0, overflow: 'hidden' }}>
+            <span
+              className="text-xs font-bold text-slate-300"
+              style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}
+            >
+              #{topic.rank}
+            </span>
+            <h3
+              className="text-sm font-semibold text-slate-800 mt-0.5 truncate"
+              style={{
+                marginTop: 0,
+                lineHeight: 1.4,
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+                minWidth: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: '100%',
+                display: 'block',
+              }}
+            >
+              {topic.name}
+            </h3>
+          </div>
+          <p className="text-xs text-slate-400 mt-1" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+            {topic.posts.toLocaleString()} posts
+          </p>
         </div>
       </div>
     </div>

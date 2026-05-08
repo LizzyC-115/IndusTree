@@ -115,10 +115,10 @@ export default function MyProfileModal() {
       {/* Modal card — 12px outer white padding */}
       <div
         className="relative z-10 w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-        style={{ padding: '12px', maxHeight: '90vh' }}
+        style={{ padding: '24px', maxHeight: '90vh', maxWidth: '100%', overflow: 'hidden', boxSizing: 'border-box', minWidth: 0 }}
       >
         {/* Inner wrapper that clips to rounded corners */}
-        <div className="flex flex-col flex-1 rounded-xl border border-slate-100 overflow-hidden bg-white">
+        <div className="flex flex-col flex-1 rounded-xl border border-slate-100 overflow-hidden bg-white" style={{ maxWidth: '100%', overflow: 'hidden', boxSizing: 'border-box', minWidth: 0 }}>
 
           {/* Header */}
           <div
@@ -129,21 +129,24 @@ export default function MyProfileModal() {
               {displayAvatar}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-white text-base leading-tight">
+              <p className="font-bold text-white text-base leading-tight" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
                 {currentUser.username || currentUser.email}
               </p>
-              <p className="text-indigo-200 text-xs mt-0.5">Your profile — only you can see this</p>
+              <p className="text-indigo-200 text-xs mt-0.5" style={{ marginTop: '4px', wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                Your profile — only you can see this
+              </p>
             </div>
             <button
               onClick={closeMyProfile}
               className="text-white/70 hover:text-white transition-colors flex-shrink-0"
+              style={{ minWidth: 0, overflow: 'hidden' }}
             >
               <X size={20} />
             </button>
           </div>
 
           {/* Tab bar */}
-          <div className="flex items-center gap-2 border-b border-slate-100 flex-wrap" style={{ padding: '10px 16px' }}>
+          <div className="flex items-center gap-2 border-b border-slate-100 flex-wrap" style={{ padding: '16px 24px', minWidth: 0, overflow: 'hidden' }}>
             {tabBtn('profile', 'Edit Profile', User)}
             {tabBtn('comments', 'Comments', MessageSquare)}
             {tabBtn('saved', 'Saved', Bookmark)}
@@ -151,7 +154,7 @@ export default function MyProfileModal() {
           </div>
 
           {/* Body — scrollable */}
-          <div className="flex-1 overflow-y-auto" style={{ padding: '20px 24px' }}>
+          <div className="flex-1 overflow-y-auto" style={{ padding: '16px 24px 28px', overflowY: 'auto', overflowX: 'hidden', minWidth: 0 }}>
 
             {/* ── EDIT PROFILE TAB ── */}
             {tab === 'profile' && (
@@ -251,7 +254,9 @@ export default function MyProfileModal() {
             {tab === 'comments' && (
               <div className="flex flex-col gap-3">
                 {comments === null && (
-                  <p className="text-sm text-slate-400 text-center py-8">Loading your comments…</p>
+                  <p className="text-sm text-slate-400 text-center py-8" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                    Loading your comments…
+                  </p>
                 )}
                 {commentsError && (
                   <p className="text-sm text-red-400 text-center py-4">
@@ -259,15 +264,23 @@ export default function MyProfileModal() {
                   </p>
                 )}
                 {comments !== null && comments.length === 0 && !commentsError && (
-                  <p className="text-sm text-slate-400 text-center py-8">You haven&apos;t posted any comments yet.</p>
+                  <p className="text-sm text-slate-400 text-center py-8" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                    You haven&apos;t posted any comments yet.
+                  </p>
                 )}
                 {comments !== null && comments.map((c) => (
                   <div key={c.id} className="rounded-xl bg-slate-50 border border-slate-100" style={{ padding: '12px 16px' }}>
-                    <p className="text-sm text-slate-800 leading-relaxed">{c.content}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-xs text-slate-400">Post #{c.postId}</span>
-                      <span className="text-slate-300">·</span>
-                      <span className="text-xs text-slate-400">{c.timeAgo}</span>
+                    <p className="text-sm text-slate-800 leading-relaxed" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                      {c.content}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2" style={{ minWidth: 0, overflow: 'hidden' }}>
+                      <span className="text-xs text-slate-400" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                        Post #{c.postId}
+                      </span>
+                      <span className="text-slate-300" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>·</span>
+                      <span className="text-xs text-slate-400" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                        {c.timeAgo}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -278,15 +291,23 @@ export default function MyProfileModal() {
             {tab === 'saved' && (
               <div className="flex flex-col gap-3">
                 {savedPosts.length === 0 && (
-                  <p className="text-sm text-slate-400 text-center py-8">No saved posts yet — click the bookmark on any open post.</p>
+                  <p className="text-sm text-slate-400 text-center py-8" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                    No saved posts yet — click the bookmark on any open post.
+                  </p>
                 )}
                 {savedPosts.map((p) => (
                   <div key={p.id} className="rounded-xl bg-slate-50 border border-slate-100" style={{ padding: '12px 16px' }}>
-                    <p className="text-sm font-semibold text-slate-800 leading-snug mb-1">{p.title}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500">by {p.author}</span>
-                      <span className="text-slate-300">·</span>
-                      <span className="text-xs text-indigo-500 font-medium">+{p.votes ?? 0} votes</span>
+                    <p className="text-sm font-semibold text-slate-800 leading-snug mb-1" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                      {p.title}
+                    </p>
+                    <div className="flex items-center gap-2" style={{ minWidth: 0, overflow: 'hidden' }}>
+                      <span className="text-xs text-slate-500" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                        by {p.author}
+                      </span>
+                      <span className="text-slate-300" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>·</span>
+                      <span className="text-xs text-indigo-500 font-medium" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                        +{p.votes ?? 0} votes
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -297,15 +318,23 @@ export default function MyProfileModal() {
             {tab === 'upvotes' && (
               <div className="flex flex-col gap-3">
                 {upvotedPosts.length === 0 && (
-                  <p className="text-sm text-slate-400 text-center py-8">No upvotes yet — upvote posts you find helpful.</p>
+                  <p className="text-sm text-slate-400 text-center py-8" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                    No upvotes yet — upvote posts you find helpful.
+                  </p>
                 )}
                 {upvotedPosts.map((p) => (
                   <div key={p.id} className="rounded-xl bg-slate-50 border border-slate-100" style={{ padding: '12px 16px' }}>
-                    <p className="text-sm font-semibold text-slate-800 leading-snug mb-1">{p.title}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500">by {p.author}</span>
-                      <span className="text-slate-300">·</span>
-                      <span className="text-xs text-emerald-600 font-medium">↑ Upvoted</span>
+                    <p className="text-sm font-semibold text-slate-800 leading-snug mb-1" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                      {p.title}
+                    </p>
+                    <div className="flex items-center gap-2" style={{ minWidth: 0, overflow: 'hidden' }}>
+                      <span className="text-xs text-slate-500" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                        by {p.author}
+                      </span>
+                      <span className="text-slate-300" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>·</span>
+                      <span className="text-xs text-emerald-600 font-medium" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                        ↑ Upvoted
+                      </span>
                     </div>
                   </div>
                 ))}

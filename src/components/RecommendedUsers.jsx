@@ -135,27 +135,57 @@ export default function RecommendedUsers({ currentUser }) {
     };
 
     return (
-      <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-all group">
-        <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+      <div
+        className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-all group"
+        style={{ padding: '12px 16px', gap: '12px', minWidth: 0, overflow: 'hidden' }}
+      >
+        <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-white font-semibold text-xs flex-shrink-0" style={{ minWidth: 0, overflow: 'hidden' }}>
           {user.username?.[0]?.toUpperCase() || 'U'}
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-800 text-sm truncate">{user.username}</p>
-          <p className="text-xs text-slate-500 truncate">
+        <div className="flex-1 min-w-0" style={{ minWidth: 0, overflow: 'hidden' }}>
+          <p
+            className="font-semibold text-slate-800 text-sm truncate"
+            style={{
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              maxWidth: '100%',
+              display: 'block',
+            }}
+          >
+            {user.username}
+          </p>
+          <p
+            className="text-xs text-slate-500 truncate"
+            style={{
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              maxWidth: '100%',
+              display: 'block',
+            }}
+          >
             {user.major || 'Student'}{user.gradYear && ` '${user.gradYear.slice(-2)}`}
           </p>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5" style={{ minWidth: 0, overflow: 'hidden' }}>
           {user.score > 0 && (
-            <div className="flex items-center gap-0.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md">
+            <div className="flex items-center gap-0.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md" style={{ minWidth: 0, overflow: 'hidden' }}>
               <TrendingUp className="w-3 h-3" />
-              {user.score}
+              <span style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>{user.score}</span>
             </div>
           )}
           <button
             onClick={handleDmClick}
             className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
             title="Send DM"
+            style={{ minWidth: 0, overflow: 'hidden' }}
           >
             <MessageCircle className="w-4 h-4" />
           </button>
@@ -165,23 +195,28 @@ export default function RecommendedUsers({ currentUser }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100">
-      <div className="px-4 py-3 border-b border-slate-100">
-        <div className="flex items-center gap-2">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100" style={{ minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}>
+      <div className="px-4 py-3 border-b border-slate-100" style={{ minWidth: 0, overflow: 'hidden' }}>
+        <div className="flex items-center gap-2" style={{ minWidth: 0, overflow: 'hidden' }}>
           <Users className="w-4 h-4 text-indigo-600" />
-          <h3 className="font-bold text-slate-800 text-sm">Recommended Connections</h3>
+          <h3
+            className="font-bold text-slate-800 text-sm"
+            style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}
+          >
+            Recommended Connections
+          </h3>
         </div>
       </div>
 
-      <div className="p-3 pb-4">
+      <div className="p-3 pb-4" style={{ minWidth: 0, overflow: 'hidden' }}>
         {/* Always-visible top 3 */}
-        <div className="space-y-0.5">
+        <div className="space-y-0.5" style={{ minWidth: 0, overflow: 'hidden' }}>
           {shown.map((user) => <UserRow key={user.id} user={user} />)}
         </div>
 
         {/* Scrollable overflow for extras */}
         {hidden.length > 0 && (
-          <div className="mt-0.5 max-h-32 overflow-y-auto space-y-0.5 border-t border-slate-50 pt-1">
+          <div className="mt-0.5 max-h-32 overflow-y-auto space-y-0.5 border-t border-slate-50 pt-1" style={{ overflowY: 'auto', overflowX: 'hidden', minWidth: 0 }}>
             {hidden.map((user) => <UserRow key={user.id} user={user} />)}
           </div>
         )}

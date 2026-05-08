@@ -50,22 +50,24 @@ export default function ProfileSurvey({ user, onComplete }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-8">
-      <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl max-h-[90vh] overflow-y-auto" style={{ maxWidth: '100%', overflow: 'hidden', overflowY: 'auto', overflowX: 'hidden', boxSizing: 'border-box', minWidth: 0 }}>
 
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-slate-100 rounded-t-3xl" style={{ padding: '26px 36px 20px' }}>
-          <h2 className="text-2xl font-bold text-slate-800">Complete Your Profile</h2>
-          <p className="text-sm text-slate-500 mt-2">
+        <div className="sticky top-0 bg-white border-b border-slate-100 rounded-t-3xl" style={{ padding: '20px 24px', minWidth: 0, overflow: 'hidden' }}>
+          <h2 className="text-2xl font-bold text-slate-800" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+            Complete Your Profile
+          </h2>
+          <p className="text-sm text-slate-500 mt-2" style={{ marginTop: '12px', wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
             Help us personalize your experience and connect you with the right people
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ padding: '26px 36px 32px' }}>
+        <form onSubmit={handleSubmit} style={{ padding: '52px 48px', minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}>
 
           {/* Major */}
-          <div style={{ marginBottom: '20px' }}>
-            <label className={labelClass}>Major / Field of Study *</label>
+          <div style={{ marginBottom: '18px', minWidth: 0, overflow: 'hidden' }}>
+            <label className={labelClass} style={{ marginBottom: '8px', wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>Major / Field of Study *</label>
             <input
               type="text"
               name="major"
@@ -74,18 +76,20 @@ export default function ProfileSurvey({ user, onComplete }) {
               placeholder="e.g., Computer Science"
               required
               className={fieldClass}
+              style={{ minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}
             />
           </div>
 
           {/* Graduation Year */}
-          <div style={{ marginBottom: '20px' }}>
-            <label className={labelClass}>Expected Graduation Year *</label>
+          <div style={{ marginBottom: '18px', minWidth: 0, overflow: 'hidden' }}>
+            <label className={labelClass} style={{ marginBottom: '8px', wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>Expected Graduation Year *</label>
             <select
               name="gradYear"
               value={formData.gradYear}
               onChange={handleChange}
               required
               className={fieldClass}
+              style={{ minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}
             >
               <option value="">Select year</option>
               <option value="2024">2024</option>
@@ -99,14 +103,15 @@ export default function ProfileSurvey({ user, onComplete }) {
           </div>
 
           {/* Industry Interest */}
-          <div style={{ marginBottom: '20px' }}>
-            <label className={labelClass}>Industry of Interest *</label>
+          <div style={{ marginBottom: '18px', minWidth: 0, overflow: 'hidden' }}>
+            <label className={labelClass} style={{ marginBottom: '8px', wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>Industry of Interest *</label>
             <select
               name="industry"
               value={formData.industry}
               onChange={handleChange}
               required
               className={fieldClass}
+              style={{ minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}
             >
               <option value="">Select industry</option>
                   <option value="Finance">Finance</option>
@@ -121,14 +126,15 @@ export default function ProfileSurvey({ user, onComplete }) {
           </div>
 
           {/* Experience Level */}
-          <div style={{ marginBottom: '20px' }}>
-            <label className={labelClass}>Experience Level *</label>
+          <div style={{ marginBottom: '18px', minWidth: 0, overflow: 'hidden' }}>
+            <label className={labelClass} style={{ marginBottom: '8px', wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>Experience Level *</label>
             <select
               name="experienceLevel"
               value={formData.experienceLevel}
               onChange={handleChange}
               required
               className={fieldClass}
+              style={{ minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}
             >
               <option value="">Select level</option>
               <option value="No Experience">No Experience</option>
@@ -139,8 +145,8 @@ export default function ProfileSurvey({ user, onComplete }) {
           </div>
 
           {/* Interests */}
-          <div style={{ marginBottom: '20px' }}>
-            <label className={labelClass}>Topics of Interest (Optional)</label>
+          <div style={{ marginBottom: '18px', minWidth: 0, overflow: 'hidden' }}>
+            <label className={labelClass} style={{ marginBottom: '8px', wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>Topics of Interest (Optional)</label>
             <textarea
               name="interests"
               value={formData.interests}
@@ -153,8 +159,8 @@ export default function ProfileSurvey({ user, onComplete }) {
           </div>
 
           {/* Goals */}
-          <div style={{ marginBottom: '26px' }}>
-            <label className={labelClass}>What are your goals? (Optional)</label>
+          <div style={{ marginBottom: '18px', minWidth: 0, overflow: 'hidden' }}>
+            <label className={labelClass} style={{ marginBottom: '8px', wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>What are your goals? (Optional)</label>
             <textarea
               name="goals"
               value={formData.goals}
@@ -176,6 +182,7 @@ export default function ProfileSurvey({ user, onComplete }) {
             type="submit"
             disabled={loading}
             className="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-2xl hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ minWidth: 0, overflow: 'hidden' }}
           >
             {loading ? 'Saving...' : 'Complete Profile'}
           </button>

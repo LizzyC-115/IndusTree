@@ -73,11 +73,24 @@ export default function PostList() {
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className="min-w-0 px-2" style={{ paddingTop: '18px' }}>
+    <div
+      className="min-w-0 px-2"
+      style={{
+        paddingTop: '18px',
+        width: '100%',
+        maxWidth: '100%',
+        overflowX: 'hidden',
+        minWidth: 0,
+        boxSizing: 'border-box',
+      }}
+    >
       {/* Header */}
-      <div className="bg-white rounded-2xl border border-slate-100 px-5 py-4 shadow-sm" style={{ marginBottom: '10px' }}>
+      <div
+        className="bg-white rounded-2xl border border-slate-100 px-5 py-4 shadow-sm"
+        style={{ marginBottom: '10px', minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}
+      >
         {/* Single pill bar containing all 4 sort controls */}
-        <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
+        <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1" style={{ minWidth: 0, overflow: 'hidden' }}>
 
           {/* Recently Active / Most Popular / Most Discussed */}
           {sortOptions.map((option) => {
@@ -92,15 +105,30 @@ export default function PostList() {
                     ? 'bg-white text-indigo-600 shadow-sm'
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
+                style={{ minWidth: 0, overflow: 'hidden' }}
               >
                 <Icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{option.label}</span>
+                <span
+                  className="hidden sm:inline"
+                  style={{
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word',
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    maxWidth: '100%',
+                    display: 'block',
+                  }}
+                >
+                  {option.label}
+                </span>
               </button>
             );
           })}
 
           {/* Date sort — same pill style, opens dropdown on click */}
-          <div ref={dateRef} className="relative flex-1">
+          <div ref={dateRef} className="relative flex-1" style={{ minWidth: 0, overflow: 'hidden' }}>
             <button
               onClick={() => setDateDropdownOpen((o) => !o)}
               className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -108,9 +136,22 @@ export default function PostList() {
                   ? 'bg-white text-indigo-600 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
+              style={{ minWidth: 0, overflow: 'hidden' }}
             >
               <CalendarDays className="w-4 h-4" />
-              <span className="hidden sm:inline">
+              <span
+                className="hidden sm:inline"
+                style={{
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word',
+                  minWidth: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '100%',
+                  display: 'block',
+                }}
+              >
                 {dateSortOrder === 'newest' ? 'Newest' : 'Oldest'}
               </span>
               <ChevronDown className="w-3 h-3 opacity-60" />
@@ -142,41 +183,72 @@ export default function PostList() {
       </div>
 
       {/* Posts */}
-      <div className="space-y-3">
+      <div className="space-y-3" style={{ minWidth: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {posts.length > 0 ? (
           paginatedPosts.map((post) => (
             <PostCard key={post.id} post={post} />
           ))
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-100 p-16 text-center shadow-sm">
-            <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+          <div className="bg-white rounded-2xl border border-slate-100 p-16 text-center shadow-sm" style={{ minWidth: 0, overflow: 'hidden' }}>
+            <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ minWidth: 0, overflow: 'hidden' }}>
               <MessageSquare className="w-10 h-10 text-slate-300" />
             </div>
-            <h3 className="text-lg font-bold text-slate-800 mb-2">No discussions found</h3>
-            <p className="text-slate-500">Be the first to start a discussion in this industry!</p>
+            <h3
+              className="text-lg font-bold text-slate-800 mb-2"
+              style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}
+            >
+              No discussions found
+            </h3>
+            <p
+              className="text-slate-500"
+              style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}
+            >
+              Be the first to start a discussion in this industry!
+            </p>
           </div>
         )}
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-between bg-white rounded-2xl border border-slate-100 shadow-sm" style={{ padding: '10px 20px' }}>
-          <span className="text-sm text-slate-500">
+        <div
+          className="mt-6 flex items-center justify-between bg-white rounded-2xl border border-slate-100 shadow-sm"
+          style={{ padding: '10px 20px', minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}
+        >
+          <span className="text-sm text-slate-500" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
             Page <span className="font-semibold text-slate-700">{safePage}</span> of{' '}
             <span className="font-semibold text-slate-700">{totalPages}</span>
-            <span className="hidden sm:inline"> &middot; {posts.length} discussions</span>
+            <span className="hidden sm:inline" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+              {' '}
+              &middot; {posts.length} discussions
+            </span>
           </span>
 
           {/* Nav shifted inward with mr-6 */}
-          <div className="flex items-center gap-1 mr-6">
+          <div className="flex items-center gap-1 mr-6" style={{ minWidth: 0, overflow: 'hidden' }}>
             {/* Prev */}
             <button
               onClick={() => goToPage(safePage - 1)}
               disabled={safePage === 1}
               className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              style={{ minWidth: 0, overflow: 'hidden' }}
             >
               <ChevronLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Prev</span>
+              <span
+                className="hidden sm:inline"
+                style={{
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word',
+                  minWidth: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '100%',
+                  display: 'block',
+                }}
+              >
+                Prev
+              </span>
             </button>
 
             {/* Page numbers */}
@@ -184,9 +256,14 @@ export default function PostList() {
               const prev = pageNumbers[idx - 1];
               const showEllipsis = prev && page - prev > 1;
               return (
-                <span key={page} className="flex items-center gap-1">
+                <span key={page} className="flex items-center gap-1" style={{ minWidth: 0, overflow: 'hidden' }}>
                   {showEllipsis && (
-                    <span className="px-2 text-slate-400 text-sm select-none">…</span>
+                    <span
+                      className="px-2 text-slate-400 text-sm select-none"
+                      style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}
+                    >
+                      …
+                    </span>
                   )}
                   <button
                     onClick={() => goToPage(page)}
@@ -195,8 +272,9 @@ export default function PostList() {
                         ? 'bg-indigo-600 text-white shadow-sm'
                         : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'
                     }`}
+                    style={{ minWidth: 0, overflow: 'hidden' }}
                   >
-                    {page}
+                    <span style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>{page}</span>
                   </button>
                 </span>
               );
@@ -207,8 +285,23 @@ export default function PostList() {
               onClick={() => goToPage(safePage + 1)}
               disabled={safePage === totalPages}
               className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              style={{ minWidth: 0, overflow: 'hidden' }}
             >
-              <span className="hidden sm:inline">Next</span>
+              <span
+                className="hidden sm:inline"
+                style={{
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word',
+                  minWidth: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '100%',
+                  display: 'block',
+                }}
+              >
+                Next
+              </span>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
