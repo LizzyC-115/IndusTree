@@ -1,18 +1,146 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────────────────────
+   IndusTree Palette — applied app-wide via Tailwind v4 @theme remapping.
+   ──────────────────────────────────────────────────────────────────────── */
+@theme {
+  /* Custom brand tokens (available as bg-ink-black, text-eggshell, etc.) */
+  --color-ink-black: #0D1321;
+  --color-deep-space: #1D2D44;
+  --color-blue-slate: #3E5C76;
+  --color-dusty-denim: #748CAB;
+  --color-eggshell: #F0EBD8;
+
+  /* Primary brand surface — remap "indigo" → Deep Space Blue scale */
+  --color-indigo-50:  #EEF1F6;
+  --color-indigo-100: #DCE2EC;
+  --color-indigo-200: #B8C3D5;
+  --color-indigo-300: #91A3BE;
+  --color-indigo-400: #748CAB;
+  --color-indigo-500: #4D6989;
+  --color-indigo-600: #1D2D44;
+  --color-indigo-700: #15233A;
+  --color-indigo-800: #0F1A2E;
+  --color-indigo-900: #0D1321;
+  --color-indigo-950: #060A14;
+
+  /* Secondary accent — remap "violet" → Blue Slate scale */
+  --color-violet-50:  #F1F4F8;
+  --color-violet-100: #E1E7EE;
+  --color-violet-200: #C2CDDA;
+  --color-violet-300: #9FB0C2;
+  --color-violet-400: #748CAB;
+  --color-violet-500: #56738F;
+  --color-violet-600: #3E5C76;
+  --color-violet-700: #2E475C;
+  --color-violet-800: #213447;
+  --color-violet-900: #14213A;
+  --color-violet-950: #0D1321;
+
+  /* Tertiary — remap "purple" → mirrors blue-slate but slightly cooler */
+  --color-purple-50:  #F1F4F8;
+  --color-purple-100: #DEE5EE;
+  --color-purple-200: #BFCBDA;
+  --color-purple-300: #98ABC2;
+  --color-purple-400: #6E89A6;
+  --color-purple-500: #4F6E8B;
+  --color-purple-600: #3E5C76;
+  --color-purple-700: #2C455A;
+  --color-purple-800: #1D2D44;
+  --color-purple-900: #14213A;
+  --color-purple-950: #0D1321;
+
+  /* Neutrals — remap "slate" → warm-leaning ink/eggshell scale.
+     Light end picks up the eggshell warmth; dark end goes ink-black. */
+  --color-slate-50:  #FAF8F0;
+  --color-slate-100: #F0EBD8;
+  --color-slate-200: #E2DCC4;
+  --color-slate-300: #C8CCD0;
+  --color-slate-400: #748CAB;
+  --color-slate-500: #5A6F89;
+  --color-slate-600: #3E5C76;
+  --color-slate-700: #2A3F55;
+  --color-slate-800: #1D2D44;
+  --color-slate-900: #0D1321;
+  --color-slate-950: #060A14;
+
+  /* "gray" mirrors slate so any stray uses stay consistent */
+  --color-gray-50:  #FAF8F0;
+  --color-gray-100: #F0EBD8;
+  --color-gray-200: #E2DCC4;
+  --color-gray-300: #C8CCD0;
+  --color-gray-400: #748CAB;
+  --color-gray-500: #5A6F89;
+  --color-gray-600: #3E5C76;
+  --color-gray-700: #2A3F55;
+  --color-gray-800: #1D2D44;
+  --color-gray-900: #0D1321;
+
+  /* Tone semantic accents toward the palette — kept distinct but harmonized */
+  --color-rose-50:  #F8EFEC;
+  --color-rose-100: #F1DDD6;
+  --color-rose-200: #E5BCAF;
+  --color-rose-300: #D38E7A;
+  --color-rose-500: #B5654F;
+  --color-rose-600: #9C4F3A;
+  --color-rose-700: #7E3F2E;
+
+  --color-emerald-50:  #ECF2EE;
+  --color-emerald-100: #D6E3DA;
+  --color-emerald-500: #4F8068;
+  --color-emerald-600: #3E6A55;
+  --color-emerald-700: #2F5443;
+
+  --color-amber-50:  #F8F1DD;
+  --color-amber-100: #F0E4BD;
+  --color-amber-500: #B98E3D;
+  --color-amber-600: #9A7530;
+
+  /* Typography */
+  --font-sans: 'Inter', 'SF Pro Text', system-ui, -apple-system, sans-serif;
+  --font-display: 'Inter Tight', 'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: #f8fafc;
-  color: #1e293b;
+  font-family: 'Inter', 'SF Pro Text', system-ui, -apple-system, sans-serif;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  background-color: #F4F1E4; /* soft eggshell — gentler than F0EBD8 for full-page bg */
+  color: #0D1321;
+  letter-spacing: -0.011em;
   min-height: 100vh;
 }
 
+/* Headings + bold UI labels use Inter Tight for that refined Apple-display feel */
+h1, h2, h3, h4, h5, h6,
+.font-bold, .font-extrabold,
+button.font-bold, button.font-semibold {
+  font-family: 'Inter Tight', 'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.02em;
+}
+
 #root {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Hide scrollbars on sidebars while keeping them scrollable */
+.sidebar-scroll {
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.sidebar-scroll::-webkit-scrollbar {
+  display: none;
 }

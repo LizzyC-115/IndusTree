@@ -11,6 +11,9 @@ import PostList from './components/PostList';
 import TrendingSidebar from './components/TrendingSidebar';
 import CreatePostModal from './components/CreatePostModal';
 import PostDetail from './components/PostDetail';
+import DirectMessagesModal from './components/DirectMessagesModal';
+import UserProfileModal from './components/UserProfileModal';
+import MyProfileModal from './components/MyProfileModal';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -87,20 +90,35 @@ function App() {
   }
 
   return (
-    <AppProvider>
-      <div className="min-h-screen bg-slate-50">
+    <AppProvider currentUser={user}>
+      <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
         <Header user={user} onLogout={handleLogout} />
-        
-        <main className="max-w-[1400px] mx-auto px-6 py-8">
-          <div className="grid grid-cols-[240px_1fr_280px] gap-8">
-            <Sidebar />
-            <PostList />
-            <TrendingSidebar currentUser={user} />
+
+        {/* Main layout — fills remaining viewport height, no outer scroll */}
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+            <div className="h-full grid grid-cols-1 gap-8 lg:gap-10 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_280px]">
+              {/* Left sidebar — fixed, scrollable content hidden scrollbar */}
+              <div className="order-2 lg:order-1 sidebar-scroll flex flex-col">
+                <Sidebar />
+              </div>
+              {/* Main feed — only scrollable column */}
+              <div className="order-1 lg:order-2 min-w-0 overflow-y-auto pb-8">
+                <PostList />
+              </div>
+              {/* Right sidebar — fixed, scrollable content hidden scrollbar */}
+              <div className="order-3 sidebar-scroll flex flex-col">
+                <TrendingSidebar currentUser={user} />
+              </div>
+            </div>
           </div>
-        </main>
+        </div>
 
         <CreatePostModal />
         <PostDetail />
+        <DirectMessagesModal />
+        <UserProfileModal />
+        <MyProfileModal />
       </div>
     </AppProvider>
   );
