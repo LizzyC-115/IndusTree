@@ -19,21 +19,9 @@ export default function Sidebar() {
   const todayComments = todayPosts.reduce((sum, post) => sum + (post.commentCount || 0), 0);
   const participantCount = new Set(todayPosts.map((post) => post.author)).size;
   
-  console.log('📊 Sidebar stats:', {
-    totalPosts: allPosts.length,
-    todayPosts: todayDiscussions,
-    todayComments,
-    participantCount,
-    startOfToday: startOfToday.toISOString()
-  });
-  
-  // Calculate active users based on real activity, minimum 0
-  const baseActiveUsers = participantCount > 0 
-    ? participantCount * 8 + todayDiscussions * 3 + Math.floor(todayComments * 0.25)
-    : 0;
-  const activeUsers = Math.max(0, baseActiveUsers);
-  
-  console.log('👥 Active users calculation:', { participantCount, todayDiscussions, todayComments, activeUsers });
+  // Simply show the number of unique participants today
+  // This is more accurate than the inflated formula
+  const activeUsers = participantCount;
 
   const Gap = () => <div style={{ height: '18px', flexShrink: 0 }} />;
 
