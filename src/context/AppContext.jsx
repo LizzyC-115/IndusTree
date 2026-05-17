@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { initialPosts } from '../data/mockData';
 import { subscribeToDmThreads, getOrCreateDmThread, sendDmMessage as sendFirebaseDm } from '../firebase/dms';
+import { subscribeToPosts, createPost as createFirebasePost, updatePostVote, deletePost as deleteFirebasePost } from '../firebase/posts';
 import { getUserByUsername } from '../firebase/auth';
 import { saveComment, getCommentCounts } from '../firebase/comments';
 import { savePost, unsavePost, getSavedPosts } from '../firebase/saves';
@@ -9,7 +10,7 @@ import { persistVote } from '../firebase/votes';
 const AppContext = createContext();
 
 export function AppProvider({ children, currentUser }) {
-  const [posts, setPosts] = useState(initialPosts);
+  const [posts, setPosts] = useState([]);
   // commentCounts: { [postId]: number } — initialised to 0 for all posts,
   // then overwritten with real Firestore counts on mount.
   const [commentCounts, setCommentCounts] = useState(() => {
@@ -85,12 +86,39 @@ export function AppProvider({ children, currentUser }) {
     };
   }, [currentUser?.uid]);
 
-  // Load real comment counts from Firestore once on mount
+  // Subscribe to posts from Firestore
   useEffect(() => {
-    const postIds = initialPosts.map((p) => p.id);
-    getCommentCounts(postIds).then((counts) => {
-      setCommentCounts((prev) => ({ ...prev, ...counts }));
-    }).catch(() => {/* keep zeroes on error */});
+    console.log('🔌 Subscribing to posts from Firestore');
+    
+    let hasLoaded = false;
+    
+    // Set a timeout to show empty state if Firestore takes too long
+    const timeout = setTimeout(() => {
+      if (!hasLoaded) {
+        console.warn('⚠️ Firestore taking too long, showing empty state');
+        setPosts([]);
+      }
+    }, 5000); // 5 second timeout
+    
+    const unsubscribe = subscribeToPosts((firestorePosts) => {
+      hasLoaded = true;
+      clearTimeout(timeout);
+      console.log('📝 Posts loaded from Firestore:', firestorePosts.length);
+      setPosts(firestorePosts);
+      
+      // Update comment counts from Firestore posts
+      const counts = {};
+      firestorePosts.forEach(post => {
+        counts[post.id] = post.commentCount || post.comments?.length || 0;
+      });
+      setCommentCounts(counts);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+      console.log('🔌 Unsubscribing from posts');
+      unsubscribe();
+    };
   }, []);
 
   // Load saved posts once when user logs in
@@ -110,21 +138,20 @@ export function AppProvider({ children, currentUser }) {
     return 0;
   };
 
-  const addPost = (newPost) => {
-    const post = {
-      id: Date.now(),
-      ...newPost,
-      votes: 0,
-      userVote: 0,
-      commentCount: 0,
-      newComments: 0,
-      timeAgo: 'Just now',
-      createdAt: Date.now(),
-      isPinned: false,
-      isTrending: false,
-      comments: [],
-    };
-    setPosts((prevPosts) => [post, ...prevPosts]);
+  const addPost = async (newPost) => {
+    if (!currentUser?.uid) {
+      console.error('Must be logged in to create posts');
+      return;
+    }
+
+    try {
+      await createFirebasePost(newPost, currentUser.uid, currentUser.username || 'Anonymous');
+      // Real-time listener will update the UI automatically
+      console.log('✅ Post created successfully');
+    } catch (error) {
+      console.error('❌ Error creating post:', error);
+      throw error;
+    }
   };
 
   const votePost = (postId, direction) => {

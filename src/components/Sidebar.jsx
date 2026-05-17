@@ -18,7 +18,12 @@ export default function Sidebar() {
   const todayDiscussions = todayPosts.length;
   const todayComments = todayPosts.reduce((sum, post) => sum + (post.commentCount || 0), 0);
   const participantCount = new Set(todayPosts.map((post) => post.author)).size;
-  const activeUsers = participantCount * 8 + todayDiscussions * 3 + Math.floor(todayComments * 0.25);
+  
+  // Calculate active users based on real activity, minimum 0
+  const baseActiveUsers = participantCount > 0 
+    ? participantCount * 8 + todayDiscussions * 3 + Math.floor(todayComments * 0.25)
+    : 0;
+  const activeUsers = Math.max(0, baseActiveUsers);
 
   const Gap = () => <div style={{ height: '18px', flexShrink: 0 }} />;
 

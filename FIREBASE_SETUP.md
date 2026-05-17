@@ -82,16 +82,19 @@ service cloud.firestore {
                        request.auth.uid in resource.data.participants;
     }
     
-    // Posts collection (for future use)
+    // Posts collection
     match /posts/{postId} {
-      // Anyone authenticated can read posts
-      allow read: if request.auth != null;
+      // Anyone can read posts (even unauthenticated for browsing)
+      allow read: if true;
       // Only authenticated users can create posts
-      allow create: if request.auth != null;
+      allow create: if request.auth != null && 
+                      request.resource.data.authorId == request.auth.uid;
       // Only post author can update their post
-      allow update: if request.auth != null && request.auth.uid == resource.data.authorId;
+      allow update: if request.auth != null && 
+                       request.auth.uid == resource.data.authorId;
       // Only post author can delete their post
-      allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
+      allow delete: if request.auth != null && 
+                       request.auth.uid == resource.data.authorId;
     }
     
     // Comments collection (for future use)
