@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Clock, TrendingUp, MessageSquare, CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Clock, TrendingUp, MessageSquare, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ImageIcon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import PostCard from './PostCard';
 
@@ -13,6 +13,7 @@ export default function PostList() {
     dateSortOrder,
     setDateSortOrder,
     selectedCategory,
+    setIsCreateModalOpen,
   } = useApp();
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -84,13 +85,25 @@ export default function PostList() {
         boxSizing: 'border-box',
       }}
     >
-      {/* Header */}
-      <div
-        className="bg-white rounded-2xl border border-slate-100 px-5 py-4 shadow-sm"
-        style={{ marginBottom: '10px', minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}
-      >
-        {/* Single pill bar containing all 4 sort controls */}
-        <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1" style={{ minWidth: 0, overflow: 'hidden' }}>
+      {/* Combined composer + sort bar — single card */}
+      <div style={{ background: 'white', borderRadius: '16px', border: '1px solid #f1f5f9', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', marginBottom: '14px', overflow: 'hidden' }}>
+        {/* Gradient header — matches Trending Topics */}
+        <div className="bg-white border-b border-slate-100" style={{ padding: '14px 20px' }}>
+          <p style={{ fontSize: '15px', fontWeight: '600', color: '#334155', margin: 0 }}>Share something with your community:</p>
+        </div>
+        <div style={{ padding: '14px 20px 14px' }}>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            style={{ width: '100%', textAlign: 'left', padding: '12px 18px', background: '#f1f5f9', borderRadius: '12px', fontSize: '14px', color: '#94a3b8', border: 'none', cursor: 'pointer' }}
+          >
+            Start a discussion…
+          </button>
+
+          {/* Thin divider */}
+          <div style={{ height: '1px', background: '#f1f5f9', margin: '14px 0 10px' }} />
+
+        {/* Sort tabs inline inside the same card */}
+        <div className="flex items-center bg-slate-100 rounded-xl" style={{ padding: '4px', gap: '4px', minWidth: 0, overflow: 'hidden' }}>
 
           {/* Recently Active / Most Popular / Most Discussed */}
           {sortOptions.map((option) => {
@@ -100,12 +113,12 @@ export default function PostList() {
               <button
                 key={option.id}
                 onClick={() => setSortBy(option.id)}
-                className={`flex flex-1 items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                  isActive
-                    ? 'bg-white text-indigo-600 shadow-sm'
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-all ${
+                    isActive
+                    ? 'bg-white text-rose-500 shadow-sm'
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
-                style={{ minWidth: 0, overflow: 'hidden' }}
+                style={{ minWidth: 0, overflow: 'hidden', padding: '10px 12px' }}
               >
                 <Icon className="w-4 h-4" />
                 <span
@@ -131,12 +144,12 @@ export default function PostList() {
           <div ref={dateRef} className="relative flex-1" style={{ minWidth: 0, overflow: 'hidden' }}>
             <button
               onClick={() => setDateDropdownOpen((o) => !o)}
-              className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`w-full flex items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-all ${
                 dateDropdownOpen
-                  ? 'bg-white text-indigo-600 shadow-sm'
+                  ? 'bg-white text-rose-500 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
-              style={{ minWidth: 0, overflow: 'hidden' }}
+              style={{ minWidth: 0, overflow: 'hidden', padding: '10px 12px' }}
             >
               <CalendarDays className="w-4 h-4" />
               <span
@@ -168,7 +181,7 @@ export default function PostList() {
                     onClick={() => { setDateSortOrder(opt.value); setDateDropdownOpen(false); }}
                     className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors ${
                       dateSortOrder === opt.value
-                        ? 'bg-indigo-50 text-indigo-600 font-semibold'
+                        ? 'bg-rose-50 text-rose-500 font-semibold'
                         : 'text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -178,9 +191,9 @@ export default function PostList() {
               </div>
             )}
           </div>
-
-        </div>
-      </div>
+        </div>{/* end sort tabs */}
+        </div>{/* end padding div */}
+      </div>{/* end combined card */}
 
       {/* Posts */}
       <div className="space-y-3" style={{ minWidth: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -230,7 +243,7 @@ export default function PostList() {
             <button
               onClick={() => goToPage(safePage - 1)}
               disabled={safePage === 1}
-              className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-rose-500 hover:bg-rose-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               style={{ minWidth: 0, overflow: 'hidden' }}
             >
               <ChevronLeft className="w-4 h-4" />
@@ -269,8 +282,8 @@ export default function PostList() {
                     onClick={() => goToPage(page)}
                     className={`w-9 h-9 rounded-lg text-sm font-medium transition-all ${
                       page === safePage
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'
+                        ? 'bg-rose-500 text-white shadow-sm'
+                        : 'text-slate-600 hover:bg-rose-50 hover:text-rose-500'
                     }`}
                     style={{ minWidth: 0, overflow: 'hidden' }}
                   >
@@ -284,7 +297,7 @@ export default function PostList() {
             <button
               onClick={() => goToPage(safePage + 1)}
               disabled={safePage === totalPages}
-              className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-rose-500 hover:bg-rose-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               style={{ minWidth: 0, overflow: 'hidden' }}
             >
               <span

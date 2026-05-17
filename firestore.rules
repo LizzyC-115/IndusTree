@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Users ────────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      // Anyone logged in can read profiles (for recommended users, DMs, etc.)
+      allow read: if request.auth != null;
+      // Only the owner can write their own profile
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── Posts ─────────────────────────────────────────────────────────────────
+    match /posts/{postId} {
+      // Anyone logged in can read posts
+      allow read: if request.auth != null;
+      // Any logged-in user can create a post
+      allow create: if request.auth != null;
+      // Only the author can update or delete their own post
+      allow update, delete: if request.auth != null
+                            && request.auth.uid == resource.data.authorId;
+
+      // ── Comments (subcollection) ─────────────────────────────────────────
+      match /comments/{commentId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null;
+        // Only the comment author can delete their own comment
+        allow delete: if request.auth != null
+                      && request.auth.uid == resource.data.authorUid;
+        // No one can edit a comment once posted
+        allow update: if false;
+      }
+    }
+
+    // ── Votes ─────────────────────────────────────────────────────────────────
+    match /votes/{voteId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Saved posts ───────────────────────────────────────────────────────────
+    match /saves/{saveId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── DM threads ────────────────────────────────────────────────────────────
+    match /dmThreads/{threadId} {
+      // Only participants can read/write a thread
+      allow read, write: if request.auth != null
+                         && request.auth.uid in resource.data.participants;
+      allow create: if request.auth != null;
+    }
+  }
+}

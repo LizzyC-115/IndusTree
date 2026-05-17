@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { resizeImageToDataUrl } from '../firebase/auth';
+import { Camera } from 'lucide-react';
 
 export default function ProfileSurvey({ user, onComplete }) {
   const [formData, setFormData] = useState({
@@ -10,9 +12,13 @@ export default function ProfileSurvey({ user, onComplete }) {
     experienceLevel: '',
     interests: '',
     goals: '',
+    photoURL: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const photoInputRef = useRef(null);
 
   const handleChange = (e) => {
     setFormData({
@@ -21,22 +27,35 @@ export default function ProfileSurvey({ user, onComplete }) {
     });
   };
 
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoLoading(true);
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      setPhotoPreview(dataUrl);
+      setFormData((prev) => ({ ...prev, photoURL: dataUrl }));
+    } catch {
+      setError('Could not process image — try a different file.');
+    } finally {
+      setPhotoLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      // Update user profile in Firestore
-      await updateDoc(doc(db, 'users', user.uid), {
-        ...formData,
-        profileComplete: true,
-        updatedAt: new Date().toISOString(),
-      });
+      const saveData = { ...formData, profileComplete: true, updatedAt: new Date().toISOString() };
+      if (!saveData.photoURL) delete saveData.photoURL;
+
+      await updateDoc(doc(db, 'users', user.uid), saveData);
 
       onComplete({
         ...user,
-        ...formData,
+        ...saveData,
         profileComplete: true,
       });
     } catch (err) {
@@ -64,6 +83,45 @@ export default function ProfileSurvey({ user, onComplete }) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} style={{ padding: '52px 48px', minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}>
+
+          {/* Profile Photo */}
+          <div style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            <div className="relative">
+              {photoPreview ? (
+                <img
+                  src={photoPreview}
+                  alt="Profile preview"
+                  className="w-24 h-24 rounded-full object-cover ring-4 ring-indigo-100"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center">
+                  <Camera className="w-8 h-8 text-indigo-400" />
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                disabled={photoLoading}
+                className="absolute -bottom-1 -right-1 w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              >
+                <Camera className="w-4 h-4 text-white" />
+              </button>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handlePhotoChange}
+              />
+            </div>
+            <p className="text-sm text-slate-500">
+              {photoLoading
+                ? 'Processing…'
+                : photoPreview
+                ? 'Looking good! Tap to change'
+                : 'Add a profile photo (optional)'}
+            </p>
+          </div>
 
           {/* Major */}
           <div style={{ marginBottom: '18px', minWidth: 0, overflow: 'hidden' }}>
@@ -180,11 +238,11 @@ export default function ProfileSurvey({ user, onComplete }) {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !formData.photoURL}
             className="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-2xl hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ minWidth: 0, overflow: 'hidden' }}
           >
-            {loading ? 'Saving...' : 'Complete Profile'}
+            {loading ? 'Saving...' : !formData.photoURL ? 'Add a profile photo to continue' : 'Complete Profile'}
           </button>
         </form>
       </div>

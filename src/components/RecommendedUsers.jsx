@@ -1,223 +1,150 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { Users, TrendingUp, MessageCircle } from 'lucide-react';
+import { Users, MessageCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function RecommendedUsers({ currentUser }) {
-  const [recommendations, setRecommendations] = useState([]);
+  const [allRecommendations, setAllRecommendations] = useState([]);
+  const [dismissed, setDismissed] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const { openDmWithUser } = useApp();
 
   useEffect(() => {
     if (!currentUser) return;
-    
-    const fetchRecommendations = async () => {
+    const fetch = async () => {
       try {
-        // Get all users from Firestore
-        const usersRef = collection(db, 'users');
-        const querySnapshot = await getDocs(usersRef);
-        
+        const snap = await getDocs(collection(db, 'users'));
         const allUsers = [];
-        querySnapshot.forEach((doc) => {
-          if (doc.id !== currentUser.uid) { // Exclude current user
-            allUsers.push({ id: doc.id, ...doc.data() });
-          }
+        snap.forEach((doc) => {
+          if (doc.id !== currentUser.uid) allUsers.push({ id: doc.id, ...doc.data() });
         });
-
-        // Calculate similarity scores
-        const scoredUsers = allUsers.map(user => ({
-          ...user,
-          score: calculateSimilarity(currentUser, user)
-        }));
-
-        // Sort by similarity score (highest first) and take top 5 (3 shown, rest scrollable)
-        const topRecommendations = scoredUsers
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 5);
-
-        setRecommendations(topRecommendations);
-      } catch (error) {
-        console.error('Error fetching recommendations:', error);
+        const scored = allUsers
+          .map((u) => ({ ...u, score: calculateSimilarity(currentUser, u) }))
+          .sort((a, b) => b.score - a.score);
+        setAllRecommendations(scored);
+      } catch (e) {
+        console.error('Error fetching recommendations:', e);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchRecommendations();
+    fetch();
   }, [currentUser]);
 
-  // Calculate similarity between two users
-  const calculateSimilarity = (user1, user2) => {
+  const calculateSimilarity = (u1, u2) => {
     let score = 0;
-
-    // Same major (highest weight)
-    if (user1.major && user2.major && user1.major === user2.major) {
-      score += 40;
+    if (u1.major && u2.major && u1.major === u2.major) score += 40;
+    if (u1.industry && u2.industry && u1.industry === u2.industry) score += 25;
+    if (u1.gradYear && u2.gradYear) {
+      const diff = Math.abs(parseInt(u1.gradYear) - parseInt(u2.gradYear));
+      if (diff === 0) score += 20;
+      else if (diff === 1) score += 10;
     }
-
-    // Same industry
-    if (user1.industry && user2.industry && user1.industry === user2.industry) {
-      score += 25;
+    if (u1.experienceLevel && u2.experienceLevel && u1.experienceLevel === u2.experienceLevel) score += 15;
+    if (u1.interests && u2.interests) {
+      const i1 = u1.interests.toLowerCase().split(/[,\s]+/);
+      const i2 = u2.interests.toLowerCase().split(/[,\s]+/);
+      score += i1.filter((i) => i2.includes(i)).length * 5;
     }
-
-    // Similar graduation year (within 1 year)
-    if (user1.gradYear && user2.gradYear) {
-      const yearDiff = Math.abs(parseInt(user1.gradYear) - parseInt(user2.gradYear));
-      if (yearDiff === 0) score += 20;
-      else if (yearDiff === 1) score += 10;
-    }
-
-    // Same experience level
-    if (user1.experienceLevel && user2.experienceLevel && 
-        user1.experienceLevel === user2.experienceLevel) {
-      score += 15;
-    }
-
-    // Similar interests (check for common keywords)
-    if (user1.interests && user2.interests) {
-      const interests1 = user1.interests.toLowerCase().split(/[,\s]+/);
-      const interests2 = user2.interests.toLowerCase().split(/[,\s]+/);
-      const commonInterests = interests1.filter(i => interests2.includes(i));
-      score += commonInterests.length * 5; // 5 points per common interest
-    }
-
     return score;
   };
+
+  const handleDm = (user) => {
+    openDmWithUser({
+      id: user.id,
+      name: user.username,
+      avatar: user.username?.[0]?.toUpperCase() || 'U',
+      bio: `${user.major || 'Student'}${user.gradYear ? ` '${user.gradYear.slice(-2)}` : ''}`,
+      yearsOnPlatform: 1,
+      karma: user.score || 100,
+    });
+    setDismissed((prev) => new Set([...prev, user.id]));
+  };
+
+  const visible = allRecommendations.filter((u) => !dismissed.has(u.id)).slice(0, 3);
+  const exhausted = !loading && allRecommendations.length > 0 && visible.length === 0;
 
   if (loading) {
     return (
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Users className="w-5 h-5 text-indigo-600" />
-          <h3 className="font-bold text-slate-800">Recommended Connections</h3>
+        <div className="flex items-center gap-2 mb-2">
+          <Users className="w-4 h-4 text-rose-500" />
+          <h3 className="font-bold text-slate-800 text-sm">Recommended Connections</h3>
         </div>
-        <div className="space-y-3">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="animate-pulse">
-              <div className="h-12 bg-slate-100 rounded-xl"></div>
-            </div>
+        <div className="space-y-3 mt-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse h-12 bg-slate-100 rounded-xl" />
           ))}
         </div>
       </div>
     );
   }
 
-  if (recommendations.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Users className="w-5 h-5 text-indigo-600" />
-          <h3 className="font-bold text-slate-800">Recommended Connections</h3>
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-gray-50 to-white border-b border-slate-100" style={{ padding: '7px 13px' }}>
+        <div className="flex items-center gap-2" style={{ marginBottom: '2px' }}>
+          <Users className="w-4 h-4 text-rose-500 flex-shrink-0" />
+          <h3 className="font-bold text-slate-800" style={{ fontSize: '15px' }}>Recommended Connections</h3>
         </div>
-        <p className="text-sm text-slate-500 text-center py-4">
-          Complete your profile to get personalized recommendations
+        <p className="text-xs text-slate-400">
+          Ranked by % compatibility
         </p>
       </div>
-    );
-  }
 
-  const VISIBLE = 3;
-  const shown = recommendations.slice(0, VISIBLE);
-  const hidden = recommendations.slice(VISIBLE);
-
-  const UserRow = ({ user }) => {
-    const handleDmClick = (e) => {
-      e.stopPropagation();
-      openDmWithUser({
-        id: user.id,
-        name: user.username,
-        avatar: user.username?.[0]?.toUpperCase() || 'U',
-        bio: `${user.major || 'Student'} ${user.gradYear ? `'${user.gradYear.slice(-2)}` : ''}`,
-        yearsOnPlatform: 1,
-        karma: user.score || 100,
-      });
-    };
-
-    return (
-      <div
-        className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-all group"
-        style={{ padding: '12px 16px', gap: '12px', minWidth: 0, overflow: 'hidden' }}
-      >
-        <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-white font-semibold text-xs flex-shrink-0" style={{ minWidth: 0, overflow: 'hidden' }}>
-          {user.username?.[0]?.toUpperCase() || 'U'}
-        </div>
-        <div className="flex-1 min-w-0" style={{ minWidth: 0, overflow: 'hidden' }}>
-          <p
-            className="font-semibold text-slate-800 text-sm truncate"
-            style={{
-              wordBreak: 'break-word',
-              overflowWrap: 'break-word',
-              minWidth: 0,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              maxWidth: '100%',
-              display: 'block',
-            }}
-          >
-            {user.username}
+      <div style={{ padding: '4px 7px 5px' }}>
+        {exhausted ? (
+          <p className="text-sm text-slate-400 text-center py-4">
+            You&apos;ve seen everyone for now
           </p>
-          <p
-            className="text-xs text-slate-500 truncate"
-            style={{
-              wordBreak: 'break-word',
-              overflowWrap: 'break-word',
-              minWidth: 0,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              maxWidth: '100%',
-              display: 'block',
-            }}
-          >
-            {user.major || 'Student'}{user.gradYear && ` '${user.gradYear.slice(-2)}`}
+        ) : visible.length === 0 && !loading ? (
+          <p className="text-sm text-slate-500 text-center py-4">
+            Complete your profile to get personalized recommendations
           </p>
-        </div>
-        <div className="flex items-center gap-1.5" style={{ minWidth: 0, overflow: 'hidden' }}>
-          {user.score > 0 && (
-            <div className="flex items-center gap-0.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md" style={{ minWidth: 0, overflow: 'hidden' }}>
-              <TrendingUp className="w-3 h-3" />
-              <span style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>{user.score}</span>
-            </div>
-          )}
-          <button
-            onClick={handleDmClick}
-            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-            title="Send DM"
-            style={{ minWidth: 0, overflow: 'hidden' }}
-          >
-            <MessageCircle className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    );
-  };
+        ) : (
+          <div className="space-y-0.5">
+            {visible.map((user) => (
+              <div
+                key={user.id}
+                className="flex items-center gap-3 rounded-xl hover:bg-slate-50 transition-all group"
+                style={{ padding: '4px 7px' }}
+              >
+                {/* Avatar */}
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt={user.username} className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-2 ring-slate-100" />
+                ) : (
+                  <div className="w-9 h-9 bg-rose-500 rounded-xl flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                    {user.username?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                )}
 
-  return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100" style={{ minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}>
-      <div className="px-4 py-3 border-b border-slate-100" style={{ minWidth: 0, overflow: 'hidden' }}>
-        <div className="flex items-center gap-2" style={{ minWidth: 0, overflow: 'hidden' }}>
-          <Users className="w-4 h-4 text-indigo-600" />
-          <h3
-            className="font-bold text-slate-800 text-sm"
-            style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}
-          >
-            Recommended Connections
-          </h3>
-        </div>
-      </div>
+                {/* Name + subtitle */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-slate-800 text-sm truncate">{user.username}</p>
+                  <p className="text-xs text-slate-500 truncate">
+                    {user.major || 'Student'}{user.gradYear && ` '${user.gradYear.slice(-2)}`}
+                  </p>
+                </div>
 
-      <div className="p-3 pb-4" style={{ minWidth: 0, overflow: 'hidden' }}>
-        {/* Always-visible top 3 */}
-        <div className="space-y-0.5" style={{ minWidth: 0, overflow: 'hidden' }}>
-          {shown.map((user) => <UserRow key={user.id} user={user} />)}
-        </div>
-
-        {/* Scrollable overflow for extras */}
-        {hidden.length > 0 && (
-          <div className="mt-0.5 max-h-32 overflow-y-auto space-y-0.5 border-t border-slate-50 pt-1" style={{ overflowY: 'auto', overflowX: 'hidden', minWidth: 0 }}>
-            {hidden.map((user) => <UserRow key={user.id} user={user} />)}
+                {/* Score + DM */}
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {user.score > 0 && (
+                    <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded-md">
+                      {user.score}%
+                    </span>
+                  )}
+                  <button
+                    onClick={() => handleDm(user)}
+                    className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                    title="Send DM"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

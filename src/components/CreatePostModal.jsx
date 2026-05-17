@@ -1,15 +1,33 @@
-import { useState } from 'react';
-import { X, Send } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { X, Send, ImageIcon, XCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { categories } from '../data/mockData';
+import { resizeImageToDataUrl } from '../firebase/auth';
 
 export default function CreatePostModal() {
   const { isCreateModalOpen, setIsCreateModalOpen, addPost } = useApp();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('finance');
+  const [imageURL, setImageURL] = useState(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const imageInputRef = useRef(null);
 
   if (!isCreateModalOpen) return null;
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageLoading(true);
+    try {
+      const dataUrl = await resizeImageToDataUrl(file, 600, 0.72);
+      setImageURL(dataUrl);
+    } catch {
+      // silently ignore bad files
+    } finally {
+      setImageLoading(false);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -21,11 +39,13 @@ export default function CreatePostModal() {
       category,
       author: 'You',
       avatar: 'U',
+      imageURL: imageURL || null,
     });
 
     setTitle('');
     setContent('');
     setCategory('finance');
+    setImageURL(null);
     setIsCreateModalOpen(false);
   };
 
@@ -34,6 +54,7 @@ export default function CreatePostModal() {
     setTitle('');
     setContent('');
     setCategory('finance');
+    setImageURL(null);
   };
 
   return (
@@ -113,6 +134,39 @@ export default function CreatePostModal() {
               className="w-full px-4 py-3 bg-slate-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none placeholder:text-slate-400"
               style={{ minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}
             />
+          </div>
+
+          {/* Image upload */}
+          <div style={{ marginBottom: '18px' }}>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleImageChange}
+            />
+            {imageURL ? (
+              <div className="relative rounded-xl overflow-hidden">
+                <img src={imageURL} alt="Post attachment" className="w-full max-h-48 object-cover rounded-xl" />
+                <button
+                  type="button"
+                  onClick={() => setImageURL(null)}
+                  className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-colors"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                disabled={imageLoading}
+                className="flex items-center gap-2 px-4 py-2.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl border border-dashed border-slate-200 hover:border-indigo-300 transition-all text-sm font-medium disabled:opacity-50"
+              >
+                <ImageIcon className="w-4 h-4" />
+                {imageLoading ? 'Processing…' : 'Add a photo'}
+              </button>
+            )}
           </div>
 
           {/* Actions */}

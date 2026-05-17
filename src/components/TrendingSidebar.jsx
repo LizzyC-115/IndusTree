@@ -66,7 +66,7 @@ export default function TrendingSidebar({ currentUser }) {
 
       {/* Trending Topics */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden" style={{ minWidth: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '12px 16px', minWidth: 0, overflow: 'hidden' }} className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+        <div style={{ padding: '12px 16px', minWidth: 0, overflow: 'hidden' }} className="border-b border-slate-100 bg-gradient-to-r from-gray-50 to-white">
           <h2
             className="flex items-center gap-2 font-bold text-slate-800 text-sm"
             style={{ minWidth: 0, overflow: 'hidden', wordBreak: 'break-word', overflowWrap: 'break-word' }}
@@ -115,18 +115,6 @@ export default function TrendingSidebar({ currentUser }) {
       {/* Recommended Connections */}
       <RecommendedUsers currentUser={currentUser} />
 
-      {/* Footer */}
-      <div className="px-2 pb-1" style={{ minWidth: 0, overflow: 'hidden' }}>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400" style={{ minWidth: 0, overflow: 'hidden' }}>
-          <a href="#" className="hover:text-indigo-600 transition-colors">About</a>
-          <a href="#" className="hover:text-indigo-600 transition-colors">Help</a>
-          <a href="#" className="hover:text-indigo-600 transition-colors">Privacy</a>
-          <a href="#" className="hover:text-indigo-600 transition-colors">Terms</a>
-        </div>
-        <p className="text-xs text-slate-300 mt-2" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
-          © 2024 IndusTree
-        </p>
-      </div>
 
     </aside>
   );

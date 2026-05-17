@@ -1,7 +1,7 @@
 import {
   collection, addDoc, onSnapshot, query,
   orderBy, serverTimestamp, getCountFromServer,
-  collectionGroup, where, limit, getDocs,
+  collectionGroup, where, limit, getDocs, deleteDoc, doc,
 } from 'firebase/firestore';
 import { db } from './config';
 
@@ -13,13 +13,14 @@ const toTimeAgo = (date) => {
   return `${Math.floor(diff / 86_400_000)}d`;
 };
 
-export const saveComment = async (postId, { content, authorUid, authorName, authorAvatar }) => {
+export const saveComment = async (postId, { content, authorUid, authorName, authorAvatar, authorPhotoURL }) => {
   return addDoc(collection(db, 'posts', String(postId), 'comments'), {
     postId: String(postId),
     content,
     authorUid,
     authorName,
     authorAvatar: authorAvatar || authorName?.[0]?.toUpperCase() || '?',
+    authorPhotoURL: authorPhotoURL || null,
     votes: 0,
     createdAt: serverTimestamp(),
   });
@@ -65,7 +66,9 @@ export const subscribeToComments = (postId, callback) => {
         return {
           id: doc.id,
           author: data.authorName || 'Anonymous',
+          authorUid: data.authorUid || null,
           avatar: data.authorAvatar || '?',
+          photoURL: data.authorPhotoURL || null,
           content: data.content,
           timeAgo: toTimeAgo(createdAt),
           votes: data.votes || 0,
@@ -79,6 +82,10 @@ export const subscribeToComments = (postId, callback) => {
       callback([]); // resolve loading state so UI doesn't hang
     },
   );
+};
+
+export const deleteComment = async (postId, commentId) => {
+  await deleteDoc(doc(db, 'posts', String(postId), 'comments', commentId));
 };
 
 export const getCommentCounts = async (postIds) => {

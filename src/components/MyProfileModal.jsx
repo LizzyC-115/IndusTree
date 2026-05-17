@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { X, User, MessageSquare, Bookmark, ChevronUp, CheckCircle, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, User, MessageSquare, Bookmark, ChevronUp, CheckCircle, AlertCircle, Camera } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { updateUserProfile } from '../firebase/auth';
+import { updateUserProfile, uploadProfilePhoto } from '../firebase/auth';
 import { getUserComments } from '../firebase/comments';
 
 const INDUSTRIES = ['Finance', 'Consulting', 'PM', 'SWE/Tech', 'Quant', 'Engineering', 'Medicine', 'Academia'];
@@ -18,9 +18,12 @@ const fieldClass =
 const labelClass = 'block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5';
 
 export default function MyProfileModal() {
-  const { currentUser, isMyProfileOpen, closeMyProfile, allPosts, savedPostIds } = useApp();
+  const { currentUser, isMyProfileOpen, closeMyProfile, allPosts, savedPostIds, updateCurrentUser } = useApp();
 
   const [tab, setTab] = useState('profile');
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoStatus, setPhotoStatus] = useState(null); // 'ok' | 'error' | null
+  const photoInputRef = useRef(null);
   const [form, setForm] = useState({
     major: '',
     gradYear: '',
@@ -71,6 +74,26 @@ export default function MyProfileModal() {
     currentUser.username?.[0]?.toUpperCase() ||
     currentUser.email?.[0]?.toUpperCase() ||
     'U';
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUser?.uid) return;
+    if (!file.type.startsWith('image/')) {
+      setPhotoStatus('error');
+      return;
+    }
+    setPhotoUploading(true);
+    setPhotoStatus(null);
+    const result = await uploadProfilePhoto(currentUser.uid, file);
+    setPhotoUploading(false);
+    if (result.success) {
+      updateCurrentUser({ photoURL: result.url });
+      setPhotoStatus('ok');
+      setTimeout(() => setPhotoStatus(null), 3000);
+    } else {
+      setPhotoStatus('error');
+    }
+  };
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -125,15 +148,50 @@ export default function MyProfileModal() {
             className="flex items-center gap-4 bg-gradient-to-r from-indigo-600 to-violet-600"
             style={{ padding: '20px 24px' }}
           >
-            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
-              {displayAvatar}
+            {/* Avatar with upload overlay */}
+            <div className="relative flex-shrink-0">
+              {currentUser.photoURL ? (
+                <img
+                  src={currentUser.photoURL}
+                  alt={currentUser.username}
+                  className="w-14 h-14 rounded-full object-cover ring-2 ring-white/40"
+                />
+              ) : (
+                <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-white text-xl font-bold">
+                  {displayAvatar}
+                </div>
+              )}
+              {/* Camera button overlay */}
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                disabled={photoUploading}
+                className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-indigo-50 transition-colors disabled:opacity-50"
+                title="Upload photo"
+              >
+                <Camera className="w-3.5 h-3.5 text-indigo-600" />
+              </button>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handlePhotoChange}
+              />
             </div>
+
             <div className="flex-1 min-w-0">
               <p className="font-bold text-white text-base leading-tight" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
                 {currentUser.username || currentUser.email}
               </p>
               <p className="text-indigo-200 text-xs mt-0.5" style={{ marginTop: '4px', wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
-                Your profile — only you can see this
+                {photoUploading
+                  ? 'Uploading photo…'
+                  : photoStatus === 'ok'
+                  ? '✓ Photo updated!'
+                  : photoStatus === 'error'
+                  ? 'Upload failed — try again'
+                  : 'Tap the camera to change your photo'}
               </p>
             </div>
             <button

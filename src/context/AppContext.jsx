@@ -3,13 +3,13 @@ import { initialPosts } from '../data/mockData';
 import { subscribeToDmThreads, getOrCreateDmThread, sendDmMessage as sendFirebaseDm } from '../firebase/dms';
 import { subscribeToPosts, createPost as createFirebasePost, updatePostVote, deletePost as deleteFirebasePost } from '../firebase/posts';
 import { getUserByUsername } from '../firebase/auth';
-import { saveComment, getCommentCounts } from '../firebase/comments';
+import { saveComment, getCommentCounts, deleteComment as deleteFirebaseComment } from '../firebase/comments';
 import { savePost, unsavePost, getSavedPosts } from '../firebase/saves';
 import { persistVote } from '../firebase/votes';
 
 const AppContext = createContext();
 
-export function AppProvider({ children, currentUser }) {
+export function AppProvider({ children, currentUser, onUserUpdate }) {
   const [posts, setPosts] = useState([]);
   // commentCounts: { [postId]: number } — initialised to 0 for all posts,
   // then overwritten with real Firestore counts on mount.
@@ -145,7 +145,7 @@ export function AppProvider({ children, currentUser }) {
     }
 
     try {
-      await createFirebasePost(newPost, currentUser.uid, currentUser.username || 'Anonymous');
+      await createFirebasePost(newPost, currentUser.uid, currentUser.username || 'Anonymous', currentUser.photoURL || null);
       // Real-time listener will update the UI automatically
       console.log('✅ Post created successfully');
     } catch (error) {
@@ -203,6 +203,31 @@ export function AppProvider({ children, currentUser }) {
         isSaved ? next.add(pid) : next.delete(pid);
         return next;
       });
+    }
+  };
+
+  const deletePost = async (postId) => {
+    if (!currentUser?.uid) return;
+    try {
+      await deleteFirebasePost(postId, currentUser.uid);
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
+  };
+
+  const deleteComment = async (postId, commentId) => {
+    if (!currentUser?.uid) return;
+    try {
+      await deleteFirebaseComment(postId, commentId);
+      setCommentCounts((prev) => ({ ...prev, [postId]: Math.max(0, (prev[postId] ?? 1) - 1) }));
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  };
+
+  const updateCurrentUser = (updates) => {
+    if (onUserUpdate) {
+      onUserUpdate((prev) => ({ ...prev, ...updates }));
     }
   };
 
@@ -326,6 +351,7 @@ export function AppProvider({ children, currentUser }) {
         authorUid: currentUser.uid,
         authorName: currentUser.username || comment.author,
         authorAvatar: comment.avatar || currentUser.username?.[0]?.toUpperCase() || 'U',
+        authorPhotoURL: currentUser.photoURL || null,
       });
     }
     // Update count locally so feed sort reflects it immediately
@@ -397,6 +423,9 @@ export function AppProvider({ children, currentUser }) {
       closeDm,
       setActiveDmThread,
       sendDmMessage,
+      updateCurrentUser,
+      deletePost,
+      deleteComment,
     }}>
       {children}
     </AppContext.Provider>

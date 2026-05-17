@@ -12,10 +12,10 @@ export default function Header({ user, onLogout }) {
         <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 sm:gap-6" style={{ paddingTop: '14px', paddingBottom: '14px' }}>
           {/* Left: Logo */}
           <div className="flex items-center gap-3 justify-self-start" style={{ marginLeft: '12px' }}>
-            <div className="flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl shadow-lg shadow-indigo-500/30">
+            <div className="flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 bg-rose-500 rounded-2xl shadow-lg shadow-rose-500/30">
               <TreePine className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent whitespace-nowrap">
+            <span className="text-lg sm:text-2xl font-bold text-rose-500 whitespace-nowrap">
               IndusTree
             </span>
           </div>
@@ -28,7 +28,7 @@ export default function Header({ user, onLogout }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ paddingLeft: '20px', paddingRight: '20px' }}
-              className="w-full h-11 bg-slate-100 border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all placeholder:text-slate-400"
+              className="w-full h-11 bg-slate-100 border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 focus:bg-white transition-all placeholder:text-slate-400"
             />
           </div>
 
@@ -37,25 +37,31 @@ export default function Header({ user, onLogout }) {
             <button
               type="button"
               onClick={openDmInbox}
-              className="relative p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+              className="relative p-2 text-slate-500 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
               title="Direct Messages"
             >
               <MessageCircle className="w-5 h-5" />
               {dmThreads.length > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
                   {dmThreads.length}
                 </span>
               )}
             </button>
-            <button className="relative p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
+            <button className="relative p-2 text-slate-500 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all">
               <Bell className="w-5 h-5" />
             </button>
             <div className="relative">
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-white font-semibold text-sm cursor-pointer hover:shadow-lg hover:shadow-indigo-500/30 transition-all hover:scale-105"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden cursor-pointer hover:shadow-lg hover:shadow-rose-500/30 transition-all hover:scale-105 flex-shrink-0"
               >
-                {user?.username?.[0]?.toUpperCase() || 'U'}
+                {user?.photoURL ? (
+                  <img src={user.photoURL} alt={user.username} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="w-full h-full bg-rose-500 flex items-center justify-center text-white font-semibold text-sm">
+                    {user?.username?.[0]?.toUpperCase() || 'U'}
+                  </span>
+                )}
               </button>
               
               {showDropdown && (
@@ -69,7 +75,7 @@ export default function Header({ user, onLogout }) {
                       setShowDropdown(false);
                       openMyProfile();
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-all"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-rose-50 transition-all"
                   >
                     <User className="w-4 h-4" />
                     View Profile
@@ -79,7 +85,7 @@ export default function Header({ user, onLogout }) {
                       setShowDropdown(false);
                       onLogout();
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-all"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-rose-50 transition-all"
                   >
                     <LogOut className="w-4 h-4" />
                     Logout

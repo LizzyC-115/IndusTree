@@ -90,8 +90,8 @@ function App() {
   }
 
   return (
-    <AppProvider currentUser={user}>
-      <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
+    <AppProvider currentUser={user} onUserUpdate={setUser}>
+      <div className="h-screen flex flex-col bg-white overflow-hidden">
         <Header user={user} onLogout={handleLogout} />
 
         {/* Main layout — fills remaining viewport height, no outer scroll */}

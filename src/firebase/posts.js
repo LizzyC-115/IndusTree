@@ -2,6 +2,7 @@ import {
   collection, 
   addDoc, 
   getDocs, 
+  getDoc,
   doc,
   updateDoc,
   deleteDoc,
@@ -44,7 +45,7 @@ export const subscribeToPosts = (callback) => {
 };
 
 // Create a new post
-export const createPost = async (postData, userId, username) => {
+export const createPost = async (postData, userId, username, authorPhotoURL = null) => {
   try {
     console.log('➕ Creating new post...');
     
@@ -55,6 +56,8 @@ export const createPost = async (postData, userId, username) => {
       category: postData.category,
       author: username,
       authorId: userId,
+      authorPhotoURL: authorPhotoURL || null,
+      imageURL: postData.imageURL || null,
       votes: 0,
       userVote: 0,
       commentCount: 0,
@@ -155,5 +158,3 @@ export const deletePost = async (postId, userId) => {
   }
 };
 
-// Import missing getDoc
-import { getDoc } from 'firebase/firestore';

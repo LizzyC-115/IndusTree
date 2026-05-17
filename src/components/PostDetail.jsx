@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronUp, ChevronDown, MessageSquare, Clock, Send, ArrowLeft, Bookmark } from 'lucide-react';
+import { ChevronUp, ChevronDown, MessageSquare, Clock, Send, ArrowLeft, Bookmark, Trash2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import UserActionMenu from './UserActionMenu';
 import { subscribeToComments } from '../firebase/comments';
 
 export default function PostDetail() {
-  const { selectedPost, setSelectedPost, votePost, addComment, currentUser, savedPostIds, toggleSave } = useApp();
+  const { selectedPost, setSelectedPost, votePost, addComment, currentUser, savedPostIds, toggleSave, deletePost, deleteComment } = useApp();
+  const [confirmDeletePost, setConfirmDeletePost] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [firestoreComments, setFirestoreComments] = useState(null); // null = loading
   const bottomRef = useRef(null);
@@ -117,13 +118,9 @@ export default function PostDetail() {
       
       {/* Panel */}
       <div
-        className="relative ml-auto w-full max-w-3xl bg-white shadow-2xl overflow-y-auto"
+        className="relative ml-auto w-full max-w-3xl bg-white shadow-2xl"
         style={{
-          paddingTop: '12px',
-          paddingLeft: '12px',
-          paddingRight: '12px',
           maxWidth: '100%',
-          overflow: 'hidden',
           overflowY: 'auto',
           overflowX: 'hidden',
           boxSizing: 'border-box',
@@ -131,29 +128,34 @@ export default function PostDetail() {
         }}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white/90 backdrop-blur-lg border-b border-slate-100 p-5 z-10" style={{ padding: '20px 24px', minWidth: 0, overflow: 'hidden' }}>
+        <div className="sticky top-0 bg-white border-b border-slate-100 z-10 flex items-center justify-between" style={{ padding: '20px 24px', minWidth: 0, overflow: 'hidden' }}>
           <button
             onClick={() => setSelectedPost(null)}
             className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-all"
-            style={{ minWidth: 0, overflow: 'hidden' }}
           >
             <ArrowLeft className="w-5 h-5" />
-            <span
-              className="text-sm font-semibold"
-              style={{
-                wordBreak: 'break-word',
-                overflowWrap: 'break-word',
-                minWidth: 0,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                maxWidth: '100%',
-                display: 'block',
-              }}
-            >
-              Back to discussions
-            </span>
+            <span className="text-sm font-semibold">Back to discussions</span>
           </button>
+
+          {/* Delete post — only visible to the author */}
+          {currentUser?.uid && selectedPost.authorId === currentUser.uid && (
+            <button
+              onClick={async () => {
+                if (!confirmDeletePost) { setConfirmDeletePost(true); return; }
+                await deletePost(selectedPost.id);
+                setSelectedPost(null);
+              }}
+              onBlur={() => setConfirmDeletePost(false)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                confirmDeletePost
+                  ? 'bg-rose-600 text-white'
+                  : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+              }`}
+            >
+              <Trash2 className="w-4 h-4" />
+              {confirmDeletePost ? 'Confirm delete?' : 'Delete post'}
+            </button>
+          )}
         </div>
 
         {/* Content */}
@@ -230,9 +232,13 @@ export default function PostDetail() {
               <div className="flex items-center gap-4 mb-6" style={{ minWidth: 0, overflow: 'hidden' }}>
                 <UserActionMenu user={postUser}>
                   <div className="flex items-center gap-3 hover:bg-slate-50 rounded-xl px-2 py-1.5 transition-colors" style={{ minWidth: 0, overflow: 'hidden' }}>
-                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-white text-sm font-bold">
-                      {selectedPost.avatar}
-                    </div>
+                    {selectedPost.authorPhotoURL ? (
+                      <img src={selectedPost.authorPhotoURL} alt={selectedPost.author} className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2 ring-slate-100" />
+                    ) : (
+                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                        {selectedPost.avatar}
+                      </div>
+                    )}
                     <span
                       className="font-semibold text-slate-800"
                       style={{
@@ -278,6 +284,17 @@ export default function PostDetail() {
                   {selectedPost.content}
                 </p>
               </div>
+
+              {/* Post image */}
+              {selectedPost.imageURL && (
+                <div style={{ marginTop: '20px', borderRadius: '12px', overflow: 'hidden', display: 'inline-block', maxWidth: '100%' }}>
+                  <img
+                    src={selectedPost.imageURL}
+                    alt="Post attachment"
+                    style={{ maxWidth: '100%', maxHeight: '320px', width: 'auto', height: 'auto', display: 'block', borderRadius: '12px' }}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -309,18 +326,22 @@ export default function PostDetail() {
 
             {/* Comment Form */}
             <form onSubmit={handleSubmitComment} className="mb-10">
-              <div className="flex gap-4" style={{ minWidth: 0, overflow: 'hidden' }}>
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
-                  {displayAvatar}
-                </div>
-                <div className="flex-1" style={{ minWidth: 0, overflow: 'hidden' }}>
+              <div className="flex gap-4" style={{ minWidth: 0 }}>
+                {currentUser?.photoURL ? (
+                  <img src={currentUser.photoURL} alt={displayName} className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2 ring-slate-100" />
+                ) : (
+                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                    {displayAvatar}
+                  </div>
+                )}
+                <div className="flex-1" style={{ minWidth: 0 }}>
                   <textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Share your thoughts..."
                     rows={3}
                     className="w-full px-4 py-3 bg-slate-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none placeholder:text-slate-400"
-                    style={{ minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}
+                    style={{ minWidth: 0, boxSizing: 'border-box', display: 'block' }}
                   />
                   <div className="flex justify-end mt-3" style={{ minWidth: 0, overflow: 'hidden' }}>
                     <button
@@ -359,9 +380,13 @@ export default function PostDetail() {
               ) : firestoreComments.length > 0 ? (
                 firestoreComments.map((comment) => (
                   <div key={comment.id} className="flex gap-4 p-4 bg-slate-50 rounded-2xl" style={{ minWidth: 0, overflow: 'hidden' }}>
-                    <div className="w-10 h-10 bg-gradient-to-br from-slate-400 to-slate-500 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
-                      {comment.avatar}
-                    </div>
+                    {comment.photoURL ? (
+                      <img src={comment.photoURL} alt={comment.author} className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2 ring-slate-100" />
+                    ) : (
+                      <div className="w-10 h-10 bg-gradient-to-br from-slate-400 to-slate-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                        {comment.avatar}
+                      </div>
+                    )}
                     <div className="flex-1" style={{ minWidth: 0, overflow: 'hidden' }}>
                       <div className="flex items-center gap-2 mb-2" style={{ minWidth: 0, overflow: 'hidden' }}>
                         <UserActionMenu
@@ -417,6 +442,11 @@ export default function PostDetail() {
                         <button className="text-xs text-slate-400 hover:text-indigo-600 transition-all font-medium">
                           Reply
                         </button>
+                        {currentUser?.uid === comment.authorUid || currentUser?.username === comment.author ? (
+                          <DeleteCommentButton
+                            onDelete={() => deleteComment(selectedPost.id, comment.id)}
+                          />
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -428,5 +458,21 @@ export default function PostDetail() {
         </div>
       </div>
     </div>
+  );
+}
+
+function DeleteCommentButton({ onDelete }) {
+  const [confirm, setConfirm] = useState(false);
+  return (
+    <button
+      onClick={() => { if (!confirm) { setConfirm(true); return; } onDelete(); }}
+      onBlur={() => setConfirm(false)}
+      className={`flex items-center gap-1 text-xs font-medium transition-all rounded px-1.5 py-0.5 ${
+        confirm ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-rose-600'
+      }`}
+    >
+      <Trash2 className="w-3 h-3" />
+      {confirm ? 'Confirm?' : 'Delete'}
+    </button>
   );
 }

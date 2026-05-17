@@ -151,6 +151,45 @@ export const updateUserProfile = async (uid, fields) => {
   }
 };
 
+// Resize an image File to a compressed JPEG data URL (stored directly in Firestore).
+// Max dimension is 200px; quality 0.78 keeps files well under Firestore's 1 MB doc limit.
+export const resizeImageToDataUrl = (file, maxSize = 200, quality = 0.78) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height) {
+          if (width > maxSize) { height = Math.round((height * maxSize) / width); width = maxSize; }
+        } else {
+          if (height > maxSize) { width = Math.round((width * maxSize) / height); height = maxSize; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+// Resize the photo and store it as a data URL in the user's Firestore doc.
+// No Firebase Storage rules or CORS config needed.
+export const uploadProfilePhoto = async (uid, file) => {
+  try {
+    const dataUrl = await resizeImageToDataUrl(file);
+    await updateDoc(doc(db, 'users', uid), { photoURL: dataUrl });
+    return { success: true, url: dataUrl };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
 export const getUserData = async (uid) => {
   try {
     const userDoc = await getDoc(doc(db, 'users', uid));
