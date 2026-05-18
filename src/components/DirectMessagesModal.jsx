@@ -144,7 +144,7 @@ export default function DirectMessagesModal() {
                 );
               })
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center p-6">
+              <div className="flex flex-col items-center justify-center h-full text-center p-6" style={{ paddingTop: '24px' }}>
                 <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4">
                   <MessageCircle className="w-8 h-8" />
                 </div>

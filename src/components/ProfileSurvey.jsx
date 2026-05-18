@@ -64,7 +64,7 @@ export default function ProfileSurvey({ user, onComplete }) {
     }
   };
 
-  const fieldClass = "w-full px-5 py-4 bg-slate-100 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all placeholder:text-slate-400";
+  const fieldClass = "w-full px-5 py-4 bg-slate-100 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 focus:bg-white transition-all placeholder:text-slate-400";
   const labelClass = "block text-sm font-semibold text-slate-700 mb-3";
 
   return (
@@ -91,18 +91,18 @@ export default function ProfileSurvey({ user, onComplete }) {
                 <img
                   src={photoPreview}
                   alt="Profile preview"
-                  className="w-24 h-24 rounded-full object-cover ring-4 ring-indigo-100"
+                  className="w-24 h-24 rounded-full object-cover ring-4 ring-rose-100"
                 />
               ) : (
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center">
-                  <Camera className="w-8 h-8 text-indigo-400" />
+                <div className="w-24 h-24 rounded-full bg-rose-50 flex items-center justify-center">
+                  <Camera className="w-8 h-8 text-rose-300" />
                 </div>
               )}
               <button
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
                 disabled={photoLoading}
-                className="absolute -bottom-1 -right-1 w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="absolute -bottom-1 -right-1 w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center shadow-lg hover:bg-rose-600 transition-colors disabled:opacity-50"
               >
                 <Camera className="w-4 h-4 text-white" />
               </button>
@@ -239,7 +239,7 @@ export default function ProfileSurvey({ user, onComplete }) {
           <button
             type="submit"
             disabled={loading || !formData.photoURL}
-            className="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-2xl hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-4 bg-rose-500 text-white font-bold rounded-2xl hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/30 hover:shadow-rose-500/50 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ minWidth: 0, overflow: 'hidden' }}
           >
             {loading ? 'Saving...' : !formData.photoURL ? 'Add a profile photo to continue' : 'Complete Profile'}

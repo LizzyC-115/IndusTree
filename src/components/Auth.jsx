@@ -55,7 +55,7 @@ export default function Auth({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-600 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-rose-500 via-rose-400 to-rose-300 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -63,7 +63,7 @@ export default function Auth({ onLogin }) {
             <TreePine className="w-9 h-9 text-white" />
           </div>
           <h1 className="text-4xl font-bold text-white mb-2">IndusTree</h1>
-          <p className="text-indigo-100">Connect, discuss, and grow together</p>
+          <p className="text-rose-100">Connect, discuss, and grow together</p>
         </div>
 
         {/* Auth Card */}
@@ -74,7 +74,7 @@ export default function Auth({ onLogin }) {
               onClick={() => setIsLogin(true)}
               className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
                 isLogin
-                  ? 'bg-white text-indigo-600 shadow-sm'
+                  ? 'bg-white text-rose-500 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -84,7 +84,7 @@ export default function Auth({ onLogin }) {
               onClick={() => setIsLogin(false)}
               className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
                 !isLogin
-                  ? 'bg-white text-indigo-600 shadow-sm'
+                  ? 'bg-white text-rose-500 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -106,7 +106,7 @@ export default function Auth({ onLogin }) {
                   onChange={handleChange}
                   placeholder="your@email.com"
                   required={!isLogin}
-                  className="w-full px-4 py-3.5 bg-slate-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
+                  className="w-full px-4 py-3.5 bg-slate-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 transition-all placeholder:text-slate-400"
                 />
               </div>
             )}
@@ -122,7 +122,7 @@ export default function Auth({ onLogin }) {
                 onChange={handleChange}
                 placeholder="Enter your username"
                 required
-                className="w-full px-4 py-3.5 bg-slate-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
+                className="w-full px-4 py-3.5 bg-slate-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 transition-all placeholder:text-slate-400"
               />
             </div>
 
@@ -137,7 +137,7 @@ export default function Auth({ onLogin }) {
                 onChange={handleChange}
                 placeholder="Enter your password"
                 required
-                className="w-full px-4 py-3.5 bg-slate-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-400"
+                className="w-full px-4 py-3.5 bg-slate-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 transition-all placeholder:text-slate-400"
               />
             </div>
 
@@ -152,11 +152,11 @@ export default function Auth({ onLogin }) {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    className="w-4 h-4 rounded border-slate-300 text-rose-500 focus:ring-rose-400"
                   />
                   <span className="text-slate-600">Remember me</span>
                 </label>
-                <a href="#" className="text-indigo-600 hover:text-indigo-700 font-semibold">
+                <a href="#" className="text-rose-500 hover:text-rose-600 font-semibold">
                   Forgot password?
                 </a>
               </div>
@@ -165,7 +165,7 @@ export default function Auth({ onLogin }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 bg-rose-500 text-white font-bold rounded-xl hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/30 hover:shadow-rose-500/50 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Create Account')}
             </button>
@@ -178,7 +178,7 @@ export default function Auth({ onLogin }) {
                 Don't have an account?{' '}
                 <button
                   onClick={() => setIsLogin(false)}
-                  className="text-indigo-600 hover:text-indigo-700 font-semibold"
+                  className="text-rose-500 hover:text-rose-600 font-semibold"
                 >
                   Sign up
                 </button>
@@ -188,7 +188,7 @@ export default function Auth({ onLogin }) {
                 Already have an account?{' '}
                 <button
                   onClick={() => setIsLogin(true)}
-                  className="text-indigo-600 hover:text-indigo-700 font-semibold"
+                  className="text-rose-500 hover:text-rose-600 font-semibold"
                 >
                   Login
                 </button>
@@ -197,10 +197,6 @@ export default function Auth({ onLogin }) {
           </div>
         </div>
 
-        {/* Footer Text */}
-        <p className="text-center text-indigo-100 text-sm mt-8">
-          © 2024 IndusTree. All rights reserved.
-        </p>
       </div>
     </div>
   );

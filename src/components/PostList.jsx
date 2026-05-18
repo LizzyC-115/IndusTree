@@ -88,7 +88,7 @@ export default function PostList() {
       {/* Combined composer + sort bar — single card */}
       <div style={{ background: 'white', borderRadius: '16px', border: '1px solid #f1f5f9', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', marginBottom: '14px', overflow: 'hidden' }}>
         {/* Gradient header — matches Trending Topics */}
-        <div className="bg-white border-b border-slate-100" style={{ padding: '14px 20px' }}>
+        <div className="bg-gradient-to-r from-gray-50 to-white border-b border-slate-100" style={{ padding: '12px 16px' }}>
           <p style={{ fontSize: '15px', fontWeight: '600', color: '#334155', margin: 0 }}>Share something with your community:</p>
         </div>
         <div style={{ padding: '14px 20px 14px' }}>
@@ -202,10 +202,7 @@ export default function PostList() {
             <PostCard key={post.id} post={post} />
           ))
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-100 p-16 text-center shadow-sm" style={{ minWidth: 0, overflow: 'hidden' }}>
-            <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ minWidth: 0, overflow: 'hidden' }}>
-              <MessageSquare className="w-10 h-10 text-slate-300" />
-            </div>
+          <div className="bg-white rounded-2xl border border-slate-100 text-center shadow-sm" style={{ minWidth: 0, overflow: 'hidden', padding: '48px 64px 72px' }}>
             <h3
               className="text-lg font-bold text-slate-800 mb-2"
               style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}

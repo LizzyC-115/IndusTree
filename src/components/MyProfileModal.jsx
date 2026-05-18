@@ -14,7 +14,7 @@ const EXP_LEVELS = [
 ];
 
 const fieldClass =
-  'w-full rounded-xl bg-slate-100 border border-slate-200 px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400';
+  'w-full rounded-xl bg-slate-100 border border-slate-200 px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-400';
 const labelClass = 'block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5';
 
 export default function MyProfileModal() {
@@ -118,7 +118,7 @@ export default function MyProfileModal() {
       onClick={() => setTab(id)}
       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
         tab === id
-          ? 'bg-indigo-600 text-white shadow-sm'
+          ? 'bg-rose-500 text-white shadow-sm'
           : 'text-slate-500 hover:bg-slate-100'
       }`}
     >
@@ -145,7 +145,7 @@ export default function MyProfileModal() {
 
           {/* Header */}
           <div
-            className="flex items-center gap-4 bg-gradient-to-r from-indigo-600 to-violet-600"
+            className="flex items-center gap-4 bg-gradient-to-r from-rose-500 to-rose-400"
             style={{ padding: '20px 24px' }}
           >
             {/* Avatar with upload overlay */}
@@ -166,10 +166,10 @@ export default function MyProfileModal() {
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
                 disabled={photoUploading}
-                className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-indigo-50 transition-colors disabled:opacity-50"
+                className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-rose-50 transition-colors disabled:opacity-50"
                 title="Upload photo"
               >
-                <Camera className="w-3.5 h-3.5 text-indigo-600" />
+                <Camera className="w-3.5 h-3.5 text-rose-500" />
               </button>
               <input
                 ref={photoInputRef}
@@ -184,7 +184,7 @@ export default function MyProfileModal() {
               <p className="font-bold text-white text-base leading-tight" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
                 {currentUser.username || currentUser.email}
               </p>
-              <p className="text-indigo-200 text-xs mt-0.5" style={{ marginTop: '4px', wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+              <p className="text-rose-100 text-xs mt-0.5" style={{ marginTop: '4px', wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
                 {photoUploading
                   ? 'Uploading photo…'
                   : photoStatus === 'ok'
@@ -289,7 +289,7 @@ export default function MyProfileModal() {
                     type="submit"
                     disabled={saving}
                     style={{ padding: '10px 28px' }}
-                    className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-semibold hover:from-indigo-700 hover:to-violet-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="rounded-xl bg-rose-500 text-white text-sm font-semibold hover:bg-rose-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving ? 'Saving…' : 'Save Changes'}
                   </button>
@@ -363,7 +363,7 @@ export default function MyProfileModal() {
                         by {p.author}
                       </span>
                       <span className="text-slate-300" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>·</span>
-                      <span className="text-xs text-indigo-500 font-medium" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                      <span className="text-xs text-rose-500 font-medium" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
                         +{p.votes ?? 0} votes
                       </span>
                     </div>
