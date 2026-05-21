@@ -1,7 +1,8 @@
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
-  signOut as firebaseSignOut
+  signOut as firebaseSignOut,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from './config';
@@ -185,6 +186,20 @@ export const uploadProfilePhoto = async (uid, file) => {
     const dataUrl = await resizeImageToDataUrl(file);
     await updateDoc(doc(db, 'users', uid), { photoURL: dataUrl });
     return { success: true, url: dataUrl };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+// Send a password reset email given a username (looks up their email first)
+export const sendPasswordReset = async (username) => {
+  try {
+    const q = query(collection(db, 'users'), where('username', '==', username));
+    const snap = await getDocs(q);
+    if (snap.empty) return { success: false, error: 'No account found with that username.' };
+    const email = snap.docs[0].data().email;
+    await sendPasswordResetEmail(auth, email);
+    return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
   }

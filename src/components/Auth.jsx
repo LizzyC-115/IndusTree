@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TreePine, Mail, Lock, User } from 'lucide-react';
-import { signInWithUsername, signUp } from '../firebase/auth';
+import { signInWithUsername, signUp, sendPasswordReset } from '../firebase/auth';
 
 export default function Auth({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -11,6 +11,11 @@ export default function Auth({ onLogin }) {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showReset, setShowReset] = useState(false);
+  const [resetUsername, setResetUsername] = useState('');
+  const [resetStatus, setResetStatus] = useState(null); // 'sent' | 'error' | null
+  const [resetError, setResetError] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,7 +59,22 @@ export default function Auth({ onLogin }) {
     });
   };
 
+  const handleReset = async (e) => {
+    e.preventDefault();
+    if (!resetUsername.trim()) return;
+    setResetLoading(true);
+    setResetError('');
+    const result = await sendPasswordReset(resetUsername.trim());
+    setResetLoading(false);
+    if (result.success) {
+      setResetStatus('sent');
+    } else {
+      setResetError(result.error);
+    }
+  };
+
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-br from-rose-500 via-rose-400 to-rose-300 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
@@ -156,9 +176,13 @@ export default function Auth({ onLogin }) {
                   />
                   <span className="text-slate-600">Remember me</span>
                 </label>
-                <a href="#" className="text-rose-500 hover:text-rose-600 font-semibold">
+                <button
+                  type="button"
+                  onClick={() => { setShowReset(true); setResetStatus(null); setResetError(''); setResetUsername(''); }}
+                  className="text-rose-500 hover:text-rose-600 font-semibold"
+                >
                   Forgot password?
-                </a>
+                </button>
               </div>
             )}
 
@@ -199,5 +223,51 @@ export default function Auth({ onLogin }) {
 
       </div>
     </div>
+
+      {/* Forgot password modal */}
+      {showReset && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowReset(false)} />
+          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl" style={{ padding: '32px 24px' }}>
+            <h3 className="text-lg font-bold text-slate-800 mb-1">Reset your password</h3>
+            <p className="text-sm text-slate-500 mb-5">Enter your username and we'll send a reset link to the email on your account.</p>
+
+            {resetStatus === 'sent' ? (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm text-center">
+                Reset email sent. Check your inbox.
+              </div>
+            ) : (
+              <form onSubmit={handleReset} className="flex flex-col gap-4">
+                <input
+                  type="text"
+                  value={resetUsername}
+                  onChange={(e) => setResetUsername(e.target.value)}
+                  placeholder="Your username"
+                  required
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 transition-all"
+                />
+                {resetError && (
+                  <p className="text-rose-600 text-sm">{resetError}</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="w-full py-3 bg-rose-500 text-white font-bold rounded-xl hover:bg-rose-600 transition-all disabled:opacity-50"
+                >
+                  {resetLoading ? 'Sending...' : 'Send reset link'}
+                </button>
+              </form>
+            )}
+
+            <button
+              onClick={() => setShowReset(false)}
+              className="mt-4 w-full text-center text-sm text-slate-400 hover:text-slate-600"
+            >
+              Back to login
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
