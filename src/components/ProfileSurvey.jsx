@@ -30,15 +30,18 @@ export default function ProfileSurvey({ user, onComplete }) {
   const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setError('');
     setPhotoLoading(true);
     try {
       const dataUrl = await resizeImageToDataUrl(file);
       setPhotoPreview(dataUrl);
       setFormData((prev) => ({ ...prev, photoURL: dataUrl }));
-    } catch {
-      setError('Could not process image — try a different file.');
+    } catch (err) {
+      setError(err?.message || 'Could not process image — try a different file.');
     } finally {
       setPhotoLoading(false);
+      // Reset the file input so picking the same (rejected) file again re-triggers onChange
+      if (photoInputRef.current) photoInputRef.current.value = '';
     }
   };
 
@@ -119,7 +122,7 @@ export default function ProfileSurvey({ user, onComplete }) {
                 ? 'Processing…'
                 : photoPreview
                 ? 'Looking good! Tap to change'
-                : 'Add a profile photo (optional)'}
+                : 'Add a profile photo (required)'}
             </p>
           </div>
 

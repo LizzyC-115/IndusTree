@@ -10,7 +10,9 @@ service cloud.firestore {
 
     // ── Users ────────────────────────────────────────────────────────────────
     match /users/{userId} {
-      allow read: if request.auth != null;
+      // Allow unauthenticated reads so the login flow can look up a username→email
+      // before the user has a Firebase Auth session.
+      allow read: if true;
       // Owner can write their own profile; mods can update any user (for banning)
       allow write: if request.auth != null && request.auth.uid == userId;
       allow update: if isMod();
