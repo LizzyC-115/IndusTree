@@ -1,20 +1,35 @@
 import { useState } from 'react';
-import { MessageSquare, ChevronUp, ChevronDown, Share2, Clock, Pin, Zap, Trash2 } from 'lucide-react';
+import { MessageSquare, ChevronUp, ChevronDown, Share2, Clock, Pin, PinOff, Zap, Trash2, UserX } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import UserActionMenu from './UserActionMenu';
 
 export default function PostCard({ post }) {
-  const { setSelectedPost, votePost, commentCounts, currentUser, deletePost } = useApp();
+  const { setSelectedPost, votePost, commentCounts, currentUser, deletePost, isMod, modDeletePost, pinPost, banUser } = useApp();
   const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmBan, setConfirmBan] = useState(false);
 
   const isOwner = currentUser?.uid && post.authorId === currentUser.uid;
+  const canDelete = isOwner || isMod;
 
   const handleDelete = async (e) => {
     e.stopPropagation();
     if (!confirmDelete) { setConfirmDelete(true); return; }
-    await deletePost(post.id);
+    if (isMod && !isOwner) await modDeletePost(post.id);
+    else await deletePost(post.id);
     setConfirmDelete(false);
+  };
+
+  const handlePin = async (e) => {
+    e.stopPropagation();
+    await pinPost(post.id, post.isPinned);
+  };
+
+  const handleBan = async (e) => {
+    e.stopPropagation();
+    if (!confirmBan) { setConfirmBan(true); return; }
+    await banUser(post.authorId);
+    setConfirmBan(false);
   };
 
   const getCategoryColor = (category) => {
@@ -194,7 +209,31 @@ export default function PostCard({ post }) {
               </div>
             )}
 
-            {isOwner && (
+            {isMod && (
+              <button
+                onClick={handlePin}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all text-sm font-medium text-slate-400 hover:text-amber-600 hover:bg-amber-50"
+                title={post.isPinned ? 'Unpin post' : 'Pin post'}
+              >
+                {post.isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
+              </button>
+            )}
+
+            {isMod && !isOwner && (
+              <button
+                onClick={handleBan}
+                onBlur={() => setConfirmBan(false)}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all text-sm font-medium ${
+                  confirmBan ? 'bg-red-700 text-white' : 'text-slate-400 hover:text-red-700 hover:bg-red-50'
+                }`}
+                title={confirmBan ? 'Click again to ban this user' : 'Ban user'}
+              >
+                <UserX className="w-4 h-4" />
+                {confirmBan ? 'Ban?' : ''}
+              </button>
+            )}
+
+            {canDelete && (
               <button
                 onClick={handleDelete}
                 onBlur={() => setConfirmDelete(false)}

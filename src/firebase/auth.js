@@ -190,6 +190,11 @@ export const uploadProfilePhoto = async (uid, file) => {
   }
 };
 
+// Mod-only: set banned flag on a user
+export const banUser = async (targetUid) => {
+  await updateDoc(doc(db, 'users', targetUid), { banned: true });
+};
+
 export const getUserData = async (uid) => {
   try {
     const userDoc = await getDoc(doc(db, 'users', uid));

@@ -45,10 +45,15 @@ function App() {
         try {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           if (userDoc.exists()) {
-            setUser({
-              uid: firebaseUser.uid,
-              ...userDoc.data()
-            });
+            const data = userDoc.data();
+            if (data.banned) {
+              // Banned users are signed out immediately
+              const { signOut } = await import('./firebase/auth');
+              await signOut();
+              setUser(null);
+            } else {
+              setUser({ uid: firebaseUser.uid, ...data });
+            }
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -67,7 +72,7 @@ function App() {
   // Show loading screen while checking auth state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-600 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-rose-500 via-rose-400 to-rose-300 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-lg rounded-3xl shadow-2xl mb-4 animate-pulse">
             <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>

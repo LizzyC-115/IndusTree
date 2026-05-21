@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronUp, ChevronDown, MessageSquare, Clock, Send, ArrowLeft, Bookmark, Trash2 } from 'lucide-react';
+import { ChevronUp, ChevronDown, MessageSquare, Clock, Send, ArrowLeft, Bookmark, Trash2, Pin, PinOff, UserX } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import UserActionMenu from './UserActionMenu';
 import { subscribeToComments } from '../firebase/comments';
 
 export default function PostDetail() {
-  const { selectedPost, setSelectedPost, votePost, addComment, currentUser, savedPostIds, toggleSave, deletePost, deleteComment } = useApp();
+  const { selectedPost, setSelectedPost, votePost, addComment, currentUser, savedPostIds, toggleSave, deletePost, deleteComment, isMod, modDeletePost, pinPost, banUser } = useApp();
   const [confirmDeletePost, setConfirmDeletePost] = useState(false);
+  const [confirmBanAuthor, setConfirmBanAuthor] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [firestoreComments, setFirestoreComments] = useState(null); // null = loading
   const bottomRef = useRef(null);
@@ -137,25 +138,51 @@ export default function PostDetail() {
             <span className="text-sm font-semibold">Back to discussions</span>
           </button>
 
-          {/* Delete post — only visible to the author */}
-          {currentUser?.uid && selectedPost.authorId === currentUser.uid && (
-            <button
-              onClick={async () => {
-                if (!confirmDeletePost) { setConfirmDeletePost(true); return; }
-                await deletePost(selectedPost.id);
-                setSelectedPost(null);
-              }}
-              onBlur={() => setConfirmDeletePost(false)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                confirmDeletePost
-                  ? 'bg-rose-600 text-white'
-                  : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
-              }`}
-            >
-              <Trash2 className="w-4 h-4" />
-              {confirmDeletePost ? 'Confirm delete?' : 'Delete post'}
-            </button>
-          )}
+          {/* Mod + author action buttons */}
+          <div className="flex items-center gap-1">
+            {isMod && (
+              <button
+                onClick={async () => { await pinPost(selectedPost.id, selectedPost.isPinned); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-all"
+                title={selectedPost.isPinned ? 'Unpin post' : 'Pin post'}
+              >
+                {selectedPost.isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
+              </button>
+            )}
+            {isMod && selectedPost.authorId !== currentUser?.uid && (
+              <button
+                onClick={async () => {
+                  if (!confirmBanAuthor) { setConfirmBanAuthor(true); return; }
+                  await banUser(selectedPost.authorId);
+                  setConfirmBanAuthor(false);
+                }}
+                onBlur={() => setConfirmBanAuthor(false)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  confirmBanAuthor ? 'bg-red-700 text-white' : 'text-slate-400 hover:text-red-700 hover:bg-red-50'
+                }`}
+              >
+                <UserX className="w-4 h-4" />
+                {confirmBanAuthor ? 'Ban user?' : ''}
+              </button>
+            )}
+            {(currentUser?.uid === selectedPost.authorId || isMod) && (
+              <button
+                onClick={async () => {
+                  if (!confirmDeletePost) { setConfirmDeletePost(true); return; }
+                  if (isMod && currentUser?.uid !== selectedPost.authorId) await modDeletePost(selectedPost.id);
+                  else await deletePost(selectedPost.id);
+                  setSelectedPost(null);
+                }}
+                onBlur={() => setConfirmDeletePost(false)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  confirmDeletePost ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                }`}
+              >
+                <Trash2 className="w-4 h-4" />
+                {confirmDeletePost ? 'Confirm?' : 'Delete'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Content */}
@@ -442,11 +469,16 @@ export default function PostDetail() {
                         <button className="text-xs text-slate-400 hover:text-indigo-600 transition-all font-medium">
                           Reply
                         </button>
-                        {currentUser?.uid === comment.authorUid || currentUser?.username === comment.author ? (
+                        {(currentUser?.uid === comment.authorUid || currentUser?.username === comment.author || isMod) && (
                           <DeleteCommentButton
                             onDelete={() => deleteComment(selectedPost.id, comment.id)}
                           />
-                        ) : null}
+                        )}
+                        {isMod && comment.authorUid && comment.authorUid !== currentUser?.uid && (
+                          <BanCommentAuthorButton
+                            onBan={() => banUser(comment.authorUid)}
+                          />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -473,6 +505,22 @@ function DeleteCommentButton({ onDelete }) {
     >
       <Trash2 className="w-3 h-3" />
       {confirm ? 'Confirm?' : 'Delete'}
+    </button>
+  );
+}
+
+function BanCommentAuthorButton({ onBan }) {
+  const [confirm, setConfirm] = useState(false);
+  return (
+    <button
+      onClick={() => { if (!confirm) { setConfirm(true); return; } onBan(); }}
+      onBlur={() => setConfirm(false)}
+      className={`flex items-center gap-1 text-xs font-medium transition-all rounded px-1.5 py-0.5 ${
+        confirm ? 'bg-red-700 text-white' : 'text-slate-400 hover:text-red-700'
+      }`}
+    >
+      <UserX className="w-3 h-3" />
+      {confirm ? 'Ban?' : 'Ban'}
     </button>
   );
 }

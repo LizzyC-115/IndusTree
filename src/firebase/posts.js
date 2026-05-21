@@ -4,6 +4,7 @@ import {
   getDocs, 
   getDoc,
   doc,
+  setDoc,
   updateDoc,
   deleteDoc,
   query,
@@ -133,6 +134,33 @@ export const addCommentToPost = async (postId, commentData, userId, username) =>
     console.error('❌ Error adding comment:', error);
     throw error;
   }
+};
+
+// Mod-only: delete any post without ownership check
+export const modDeletePost = async (postId) => {
+  await deleteDoc(doc(db, 'posts', postId));
+};
+
+// Toggle pin on a post (mod only)
+export const pinPost = async (postId, currentlyPinned) => {
+  await updateDoc(doc(db, 'posts', postId), {
+    isPinned: !currentlyPinned,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+// Subscribe to community rules for a specific industry
+export const subscribeToCommunityRules = (industry, callback) => {
+  const rulesRef = doc(db, 'communityRules', industry);
+  return onSnapshot(rulesRef, (snap) => {
+    callback(snap.exists() ? (snap.data().rules || []) : null);
+  }, () => callback(null));
+};
+
+// Save updated community rules (mod only)
+export const updateCommunityRules = async (industry, rules) => {
+  const rulesRef = doc(db, 'communityRules', industry);
+  await setDoc(rulesRef, { rules, updatedAt: serverTimestamp() });
 };
 
 // Delete a post

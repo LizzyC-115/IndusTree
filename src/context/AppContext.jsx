@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { initialPosts } from '../data/mockData';
 import { subscribeToDmThreads, getOrCreateDmThread, sendDmMessage as sendFirebaseDm } from '../firebase/dms';
-import { subscribeToPosts, createPost as createFirebasePost, updatePostVote, deletePost as deleteFirebasePost } from '../firebase/posts';
-import { getUserByUsername } from '../firebase/auth';
+import { subscribeToPosts, createPost as createFirebasePost, updatePostVote, deletePost as deleteFirebasePost, modDeletePost as modDeleteFirebasePost, pinPost as pinFirebasePost, subscribeToCommunityRules, updateCommunityRules as updateFirebaseCommunityRules } from '../firebase/posts';
+import { getUserByUsername, banUser as banFirebaseUser } from '../firebase/auth';
 import { saveComment, getCommentCounts, deleteComment as deleteFirebaseComment } from '../firebase/comments';
 import { savePost, unsavePost, getSavedPosts } from '../firebase/saves';
 import { persistVote } from '../firebase/votes';
@@ -31,6 +31,8 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
   const [isMyProfileOpen, setIsMyProfileOpen] = useState(false);
   // savedPostIds: Set of postId strings the current user has bookmarked
   const [savedPostIds, setSavedPostIds] = useState(new Set());
+  // communityRules: { [industry]: rules[] | null }  null = use defaults
+  const [communityRules, setCommunityRules] = useState({});
 
   // Subscribe to DM threads when user is authenticated
   useEffect(() => {
@@ -120,6 +122,15 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
       unsubscribe();
     };
   }, []);
+
+  // Subscribe to community rules for the active category
+  useEffect(() => {
+    const industry = selectedCategory || 'all';
+    const unsub = subscribeToCommunityRules(industry, (rules) => {
+      setCommunityRules((prev) => ({ ...prev, [industry]: rules }));
+    });
+    return unsub;
+  }, [selectedCategory]);
 
   // Load saved posts once when user logs in
   useEffect(() => {
@@ -223,6 +234,32 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
     } catch (error) {
       console.error('Error deleting comment:', error);
     }
+  };
+
+  const isMod = currentUser?.role === 'mod';
+
+  const modDeletePost = async (postId) => {
+    if (!isMod) return;
+    try { await modDeleteFirebasePost(postId); }
+    catch (err) { console.error('Mod delete post error:', err); }
+  };
+
+  const pinPost = async (postId, currentlyPinned) => {
+    if (!isMod) return;
+    try { await pinFirebasePost(postId, currentlyPinned); }
+    catch (err) { console.error('Pin post error:', err); }
+  };
+
+  const banUser = async (targetUid) => {
+    if (!isMod || !targetUid || targetUid === currentUser?.uid) return;
+    try { await banFirebaseUser(targetUid); }
+    catch (err) { console.error('Ban user error:', err); }
+  };
+
+  const saveCommunityRules = async (industry, rules) => {
+    if (!isMod) return;
+    try { await updateFirebaseCommunityRules(industry, rules); }
+    catch (err) { console.error('Update rules error:', err); }
   };
 
   const updateCurrentUser = (updates) => {
@@ -426,6 +463,12 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
       updateCurrentUser,
       deletePost,
       deleteComment,
+      isMod,
+      modDeletePost,
+      pinPost,
+      banUser,
+      communityRules,
+      saveCommunityRules,
     }}>
       {children}
     </AppContext.Provider>

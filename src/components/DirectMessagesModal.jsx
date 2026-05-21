@@ -82,12 +82,12 @@ export default function DirectMessagesModal() {
                     type="button"
                     onClick={() => setActiveDmThread(thread.id)}
                     className={`w-full text-left p-3 rounded-xl transition-all ${
-                      isActive ? 'bg-white border border-indigo-200 shadow-sm' : 'hover:bg-white'
+                      isActive ? 'bg-white border border-rose-200 shadow-sm' : 'hover:bg-white'
                     }`}
                     style={{ padding: '12px 14px', minWidth: 0, overflow: 'hidden' }}
                   >
                     <div className="flex items-start gap-3" style={{ gap: '12px', minWidth: 0, overflow: 'hidden' }}>
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
                         {thread.participant.avatar}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -164,7 +164,7 @@ export default function DirectMessagesModal() {
             <>
               <div className="px-5 py-3 border-b border-slate-200 bg-white flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
                     {activeThread.participant.avatar}
                   </div>
                   <div className="min-w-0">
@@ -216,7 +216,7 @@ export default function DirectMessagesModal() {
                           <div
                             className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                               isYou
-                                ? 'bg-indigo-600 text-white rounded-br-md'
+                                ? 'bg-rose-500 text-white rounded-br-md'
                                 : 'bg-slate-100 text-slate-800 rounded-bl-md'
                             }`}
                             style={{ padding: '11px 15px', maxWidth: '68%', lineHeight: '1.55', minWidth: 0, overflow: 'hidden' }}
@@ -264,14 +264,14 @@ export default function DirectMessagesModal() {
                     value={draftMessage}
                     onChange={(e) => setDraftMessage(e.target.value)}
                     placeholder="Write a message..."
-                    className="flex-1 h-11 px-4 bg-slate-100 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    style={{ minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}
+                    className="flex-1 h-11 bg-slate-100 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
+                    style={{ minWidth: 0, overflow: 'hidden', boxSizing: 'border-box', padding: '0 20px' }}
                   />
                   <button
                     type="submit"
                     disabled={!draftMessage.trim()}
-                    className="h-11 px-4 inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ minWidth: 0, overflow: 'hidden' }}
+                    className="h-11 inline-flex items-center gap-2 bg-rose-500 text-white text-sm font-semibold rounded-xl hover:bg-rose-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ minWidth: 0, overflow: 'hidden', padding: '0 22px' }}
                   >
                     <Send className="w-4 h-4" />
                     <span
