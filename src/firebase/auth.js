@@ -7,8 +7,16 @@ import {
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from './config';
 
+const EDU_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.edu$/i;
+export const EDU_EMAIL_ERROR = 'Please use a valid .edu email address to create an account.';
+export const isEduEmail = (email) => EDU_EMAIL_PATTERN.test(email.trim());
+
 export const signUp = async (email, password, username, additionalData = {}) => {
   try {
+    if (!isEduEmail(email)) {
+      return { success: false, error: EDU_EMAIL_ERROR };
+    }
+
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 

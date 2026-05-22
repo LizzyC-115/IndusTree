@@ -1,6 +1,7 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
-import { TreePine, Mail, Lock, User } from 'lucide-react';
-import { signInWithUsername, signUp, sendPasswordReset } from '../firebase/auth';
+import { TreePine } from 'lucide-react';
+import { EDU_EMAIL_ERROR, isEduEmail, signInWithUsername, signUp, sendPasswordReset } from '../firebase/auth';
 
 export default function Auth({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -36,6 +37,11 @@ export default function Auth({ onLogin }) {
           setLoading(false);
           return;
         }
+        if (!isEduEmail(formData.email)) {
+          setError(EDU_EMAIL_ERROR);
+          setLoading(false);
+          return;
+        }
         const result = await signUp(formData.email, formData.password, formData.username, {
           profileComplete: false
         });
@@ -45,7 +51,7 @@ export default function Auth({ onLogin }) {
           setError(result.error);
         }
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -124,10 +130,13 @@ export default function Auth({ onLogin }) {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="your@email.com"
+                  placeholder="your@school.edu"
                   required={!isLogin}
                   className="w-full px-4 py-3.5 bg-slate-50 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 transition-all placeholder:text-slate-400"
                 />
+                <p className="mt-2 text-xs text-slate-500">
+                  New accounts require a valid .edu email address.
+                </p>
               </div>
             )}
 
@@ -199,7 +208,7 @@ export default function Auth({ onLogin }) {
           <div className="mt-6 text-center text-sm text-slate-500">
             {isLogin ? (
               <p>
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <button
                   onClick={() => setIsLogin(false)}
                   className="text-rose-500 hover:text-rose-600 font-semibold"
@@ -230,7 +239,7 @@ export default function Auth({ onLogin }) {
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowReset(false)} />
           <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl" style={{ padding: '32px 24px' }}>
             <h3 className="text-lg font-bold text-slate-800 mb-1">Reset your password</h3>
-            <p className="text-sm text-slate-500 mb-5">Enter your username and we'll send a reset link to the email on your account.</p>
+            <p className="text-sm text-slate-500 mb-5">Enter your username and we&apos;ll send a reset link to the email on your account.</p>
 
             {resetStatus === 'sent' ? (
               <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm text-center">
