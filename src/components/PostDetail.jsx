@@ -81,6 +81,8 @@ export default function PostDetail() {
       medicine: 'bg-rose-100 text-rose-700',
       academia: 'bg-amber-100 text-amber-700',
       all: 'bg-slate-100 text-slate-700',
+      miscellaneous: 'bg-slate-100 text-slate-700',
+      'mod-reminders': 'bg-amber-100 text-amber-700',
     };
     return colors[category] || colors.all;
   };
@@ -96,6 +98,8 @@ export default function PostDetail() {
       medicine: 'Medicine',
       academia: 'Academia',
       all: 'General',
+      miscellaneous: 'Miscellaneous',
+      'mod-reminders': 'Mod Reminders',
     };
     return names[category] || 'General';
   };

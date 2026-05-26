@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { initialPosts } from '../data/mockData';
-import { subscribeToDmThreads, getOrCreateDmThread, sendDmMessage as sendFirebaseDm } from '../firebase/dms';
+import { subscribeToDmThreads, getOrCreateDmThread, sendDmMessage as sendFirebaseDm, markThreadAsRead } from '../firebase/dms';
 import { subscribeToPosts, createPost as createFirebasePost, updatePostVote, deletePost as deleteFirebasePost, modDeletePost as modDeleteFirebasePost, pinPost as pinFirebasePost, subscribeToCommunityRules, updateCommunityRules as updateFirebaseCommunityRules } from '../firebase/posts';
 import { getUserByUsername, banUser as banFirebaseUser } from '../firebase/auth';
 import { saveComment, getCommentCounts, deleteComment as deleteFirebaseComment } from '../firebase/comments';
@@ -54,18 +54,21 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
         
         console.log('Thread:', thread.id, 'Messages:', thread.messages?.length || 0, 'Other user:', otherUserData.name);
         
+        const myLastRead = thread.participantData?.[currentUser.uid]?.lastRead || null;
         return {
           id: thread.id,
           participant: {
             id: otherUserId,
             name: otherUserData.name || 'Unknown User',
             avatar: otherUserData.avatar || '?',
+            photoURL: otherUserData.photoURL || null,
             bio: otherUserData.bio || 'Student contributor',
             yearsOnPlatform: otherUserData.yearsOnPlatform || 1,
             karma: otherUserData.karma || 100
           },
           messages: thread.messages || [],
-          updatedAt: thread.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+          updatedAt: thread.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          myLastRead,
         };
       });
       
@@ -271,17 +274,24 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
   const formatUserId = (name = '') => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
   const openProfile = async (user) => {
+    // Compute karma from all posts authored by this user
+    const karma = posts
+      .filter((p) => (p.authorId && p.authorId === user.id) || p.author === user.name)
+      .reduce((sum, p) => sum + (p.votes || 0), 0);
+
     // Show basic data immediately for instant feedback
     const base = {
       id: user.id || formatUserId(user.name),
       name: user.name,
       avatar: user.avatar || user.name?.[0] || '?',
+      photoURL: user.photoURL || null,
       bio: user.bio || 'Student contributor',
       industry: user.industry || null,
       gradYear: user.gradYear || null,
       experienceLevel: user.experienceLevel || null,
       createdAt: user.createdAt || null,
       yearsOnPlatform: user.yearsOnPlatform || 1,
+      karma,
     };
     setSelectedProfileUser(base);
 
@@ -296,6 +306,7 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
           experienceLevel: result.data.experienceLevel || prev.experienceLevel,
           createdAt: result.data.createdAt || prev.createdAt,
           bio: result.data.bio || prev.bio,
+          photoURL: result.data.photoURL || prev.photoURL,
         }));
       }
     } catch { /* keep basic data */ }
@@ -316,6 +327,7 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
       id: user.id || formatUserId(user.name),
       name: user.name,
       avatar: user.avatar || user.name?.[0] || '?',
+      photoURL: user.photoURL || null,
       bio: user.bio || 'Student contributor',
       yearsOnPlatform: user.yearsOnPlatform || 1,
       karma: user.karma || 100,
@@ -362,6 +374,9 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
 
   const setActiveDmThread = (threadId) => {
     setActiveDmThreadId(threadId);
+    if (currentUser?.uid && threadId) {
+      markThreadAsRead(threadId, currentUser.uid).catch(() => {});
+    }
   };
 
   const sendDmMessage = async (threadId, text) => {
