@@ -169,6 +169,8 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
   };
 
   const votePost = (postId, direction) => {
+    let voteMeta = null;
+
     setPosts((prevPosts) =>
       prevPosts.map((post) => {
         if (post.id !== postId) return post;
@@ -180,10 +182,11 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
         const finalVote = currentVote === nextVote ? 0 : nextVote;
         const voteDelta = finalVote - currentVote;
 
-        // Persist to Firebase in the background (non-blocking)
-        if (currentUser?.uid) {
-          persistVote(currentUser.uid, post, finalVote).catch(() => {});
-        }
+        voteMeta = {
+          basePost: post,
+          finalVote,
+          voteDelta
+        };
 
         return {
           ...post,
@@ -192,6 +195,14 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
         };
       })
     );
+
+    if (currentUser?.uid && voteMeta) {
+      updatePostVote(postId, voteMeta.voteDelta, voteMeta.finalVote).catch((error) => {
+        console.error('❌ Error persisting aggregated vote:', error);
+      });
+
+      persistVote(currentUser.uid, voteMeta.basePost, voteMeta.finalVote).catch(() => {});
+    }
   };
 
   const toggleSave = async (post) => {
