@@ -1,11 +1,12 @@
+/* eslint-disable react/prop-types */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { initialPosts } from '../data/mockData';
 import { subscribeToDmThreads, getOrCreateDmThread, sendDmMessage as sendFirebaseDm } from '../firebase/dms';
-import { subscribeToPosts, createPost as createFirebasePost, updatePostVote, deletePost as deleteFirebasePost, modDeletePost as modDeleteFirebasePost, pinPost as pinFirebasePost, subscribeToCommunityRules, updateCommunityRules as updateFirebaseCommunityRules } from '../firebase/posts';
+import { subscribeToPosts, createPost as createFirebasePost, deletePost as deleteFirebasePost, modDeletePost as modDeleteFirebasePost, pinPost as pinFirebasePost, subscribeToCommunityRules, updateCommunityRules as updateFirebaseCommunityRules } from '../firebase/posts';
 import { getUserByUsername, banUser as banFirebaseUser } from '../firebase/auth';
-import { saveComment, getCommentCounts, deleteComment as deleteFirebaseComment } from '../firebase/comments';
+import { saveComment, deleteComment as deleteFirebaseComment } from '../firebase/comments';
 import { savePost, unsavePost, getSavedPosts } from '../firebase/saves';
-import { persistVote } from '../firebase/votes';
+import { getUserVotes, persistVote } from '../firebase/votes';
 
 const AppContext = createContext();
 
@@ -106,7 +107,15 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
       hasLoaded = true;
       clearTimeout(timeout);
       console.log('📝 Posts loaded from Firestore:', firestorePosts.length);
-      setPosts(firestorePosts);
+      setPosts((prevPosts) => {
+        const existingVotes = new Map(
+          prevPosts.map((post) => [String(post.id), post.userVote || 0]),
+        );
+        return firestorePosts.map((post) => ({
+          ...post,
+          userVote: existingVotes.get(String(post.id)) || 0,
+        }));
+      });
       
       // Update comment counts from Firestore posts
       const counts = {};
@@ -122,6 +131,36 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
       unsubscribe();
     };
   }, []);
+
+  // Keep each post's current user's vote state after refresh/realtime updates.
+  useEffect(() => {
+    if (!currentUser?.uid) {
+      setPosts((prevPosts) => prevPosts.map((post) => ({ ...post, userVote: 0 })));
+      return;
+    }
+
+    getUserVotes(currentUser.uid)
+      .then((votes) => {
+        const nextVotes = {};
+        votes.forEach((vote) => {
+          nextVotes[String(vote.postId || vote.id)] = vote.vote || 0;
+        });
+        setPosts((prevPosts) => prevPosts.map((post) => ({
+          ...post,
+          userVote: nextVotes[String(post.id)] || 0,
+        })));
+      })
+      .catch(() => {});
+  }, [currentUser?.uid]);
+
+  // If the selected post is open, keep it aligned with realtime feed changes.
+  useEffect(() => {
+    setSelectedPost((prev) => {
+      if (!prev) return prev;
+      const latestPost = posts.find((post) => post.id === prev.id);
+      return latestPost || prev;
+    });
+  }, [posts]);
 
   // Subscribe to community rules for the active category
   useEffect(() => {
@@ -166,6 +205,8 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
   };
 
   const votePost = (postId, direction) => {
+    let voteUpdate = null;
+
     setPosts((prevPosts) =>
       prevPosts.map((post) => {
         if (post.id !== postId) return post;
@@ -177,10 +218,7 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
         const finalVote = currentVote === nextVote ? 0 : nextVote;
         const voteDelta = finalVote - currentVote;
 
-        // Persist to Firebase in the background (non-blocking)
-        if (currentUser?.uid) {
-          persistVote(currentUser.uid, post, finalVote).catch(() => {});
-        }
+        voteUpdate = { post, finalVote, voteDelta };
 
         return {
           ...post,
@@ -189,6 +227,42 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
         };
       })
     );
+
+    if (!voteUpdate) return;
+
+    setSelectedPost((prev) => (
+      prev?.id === postId
+        ? {
+            ...prev,
+            votes: prev.votes + voteUpdate.voteDelta,
+            userVote: voteUpdate.finalVote,
+          }
+        : prev
+    ));
+
+    if (currentUser?.uid) {
+      persistVote(currentUser.uid, voteUpdate.post, voteUpdate.finalVote).catch((error) => {
+        console.error('Error persisting vote:', error);
+        setPosts((prevPosts) => prevPosts.map((post) => (
+          post.id === postId
+            ? {
+                ...post,
+                votes: post.votes - voteUpdate.voteDelta,
+                userVote: voteUpdate.post.userVote || 0,
+              }
+            : post
+        )));
+        setSelectedPost((prev) => (
+          prev?.id === postId
+            ? {
+                ...prev,
+                votes: prev.votes - voteUpdate.voteDelta,
+                userVote: voteUpdate.post.userVote || 0,
+              }
+            : prev
+        ));
+      });
+    }
   };
 
   const toggleSave = async (post) => {
@@ -228,11 +302,23 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
 
   const deleteComment = async (postId, commentId) => {
     if (!currentUser?.uid) return;
+    setCommentCounts((prev) => ({ ...prev, [postId]: Math.max(0, (prev[postId] ?? 1) - 1) }));
+    setSelectedPost((prev) => (
+      prev?.id === postId
+        ? { ...prev, commentCount: Math.max(0, (prev.commentCount ?? 1) - 1) }
+        : prev
+    ));
+
     try {
       await deleteFirebaseComment(postId, commentId);
-      setCommentCounts((prev) => ({ ...prev, [postId]: Math.max(0, (prev[postId] ?? 1) - 1) }));
     } catch (error) {
       console.error('Error deleting comment:', error);
+      setCommentCounts((prev) => ({ ...prev, [postId]: (prev[postId] ?? 0) + 1 }));
+      setSelectedPost((prev) => (
+        prev?.id === postId
+          ? { ...prev, commentCount: (prev.commentCount ?? 0) + 1 }
+          : prev
+      ));
     }
   };
 
@@ -382,7 +468,17 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
   };
 
   const addComment = async (postId, comment) => {
-    if (currentUser?.uid) {
+    if (!currentUser?.uid) return;
+
+    // Optimistic count update; the posts listener confirms the persisted value.
+    setCommentCounts((prev) => ({ ...prev, [postId]: (prev[postId] ?? 0) + 1 }));
+    setSelectedPost((prev) => (
+      prev?.id === postId
+        ? { ...prev, commentCount: (prev.commentCount ?? 0) + 1 }
+        : prev
+    ));
+
+    try {
       await saveComment(postId, {
         content: comment.content,
         authorUid: currentUser.uid,
@@ -390,9 +486,15 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
         authorAvatar: comment.avatar || currentUser.username?.[0]?.toUpperCase() || 'U',
         authorPhotoURL: currentUser.photoURL || null,
       });
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      setCommentCounts((prev) => ({ ...prev, [postId]: Math.max(0, (prev[postId] ?? 1) - 1) }));
+      setSelectedPost((prev) => (
+        prev?.id === postId
+          ? { ...prev, commentCount: Math.max(0, (prev.commentCount ?? 1) - 1) }
+          : prev
+      ));
     }
-    // Update count locally so feed sort reflects it immediately
-    setCommentCounts((prev) => ({ ...prev, [postId]: (prev[postId] ?? 0) + 1 }));
   };
 
   const filteredPosts = posts

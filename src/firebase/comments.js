@@ -1,7 +1,8 @@
 import {
-  collection, addDoc, onSnapshot, query,
+  collection, onSnapshot, query,
   orderBy, serverTimestamp, getCountFromServer,
-  collectionGroup, where, limit, getDocs, deleteDoc, doc,
+  collectionGroup, where, limit, getDocs, doc,
+  runTransaction, increment,
 } from 'firebase/firestore';
 import { db } from './config';
 
@@ -14,16 +15,27 @@ const toTimeAgo = (date) => {
 };
 
 export const saveComment = async (postId, { content, authorUid, authorName, authorAvatar, authorPhotoURL }) => {
-  return addDoc(collection(db, 'posts', String(postId), 'comments'), {
-    postId: String(postId),
-    content,
-    authorUid,
-    authorName,
-    authorAvatar: authorAvatar || authorName?.[0]?.toUpperCase() || '?',
-    authorPhotoURL: authorPhotoURL || null,
-    votes: 0,
-    createdAt: serverTimestamp(),
+  const normalizedPostId = String(postId);
+  const postRef = doc(db, 'posts', normalizedPostId);
+  const commentRef = doc(collection(db, 'posts', normalizedPostId, 'comments'));
+  await runTransaction(db, async (transaction) => {
+    transaction.set(commentRef, {
+      postId: normalizedPostId,
+      content,
+      authorUid,
+      authorName,
+      authorAvatar: authorAvatar || authorName?.[0]?.toUpperCase() || '?',
+      authorPhotoURL: authorPhotoURL || null,
+      votes: 0,
+      createdAt: serverTimestamp(),
+    });
+    transaction.update(postRef, {
+      commentCount: increment(1),
+      newComments: increment(1),
+      updatedAt: serverTimestamp(),
+    });
   });
+  return commentRef;
 };
 
 export const getUserComments = async (uid, maxResults = 30) => {
@@ -85,7 +97,19 @@ export const subscribeToComments = (postId, callback) => {
 };
 
 export const deleteComment = async (postId, commentId) => {
-  await deleteDoc(doc(db, 'posts', String(postId), 'comments', commentId));
+  const normalizedPostId = String(postId);
+  const postRef = doc(db, 'posts', normalizedPostId);
+  const commentRef = doc(db, 'posts', normalizedPostId, 'comments', commentId);
+  await runTransaction(db, async (transaction) => {
+    const commentSnap = await transaction.get(commentRef);
+    if (!commentSnap.exists()) return;
+
+    transaction.delete(commentRef);
+    transaction.update(postRef, {
+      commentCount: increment(-1),
+      updatedAt: serverTimestamp(),
+    });
+  });
 };
 
 export const getCommentCounts = async (postIds) => {
