@@ -119,6 +119,17 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
           userVote: userVotesRef.current[String(post.id)] || 0,
         }));
       });
+
+      setCommentCounts((prev) => {
+        const nextCounts = { ...prev };
+        firestorePosts.forEach((post) => {
+          const postId = String(post.id);
+          if (nextCounts[postId] === undefined) {
+            nextCounts[postId] = post.commentCount || post.comments?.length || 0;
+          }
+        });
+        return nextCounts;
+      });
     });
 
     return () => {
@@ -226,30 +237,26 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
   };
 
   const votePost = (postId, direction) => {
-    let voteUpdate = null;
+    const targetPost = posts.find((post) => post.id === postId) || selectedPost;
+    if (!targetPost || targetPost.id !== postId) return;
+
+    const currentVote = targetPost.userVote || 0;
+    const nextVote = direction === 'up' ? 1 : -1;
+    const finalVote = currentVote === nextVote ? 0 : nextVote;
+    const voteDelta = finalVote - currentVote;
+    const voteUpdate = { post: targetPost, finalVote, voteDelta };
 
     setPosts((prevPosts) =>
       prevPosts.map((post) => {
         if (post.id !== postId) return post;
 
-        const currentVote = post.userVote || 0;
-        const nextVote = direction === 'up' ? 1 : -1;
-
-        // Clicking the same vote again removes the vote (returns to neutral).
-        const finalVote = currentVote === nextVote ? 0 : nextVote;
-        const voteDelta = finalVote - currentVote;
-
-        voteUpdate = { post, finalVote, voteDelta };
-
         return {
           ...post,
-          votes: post.votes + voteDelta,
+          votes: post.votes + voteUpdate.voteDelta,
           userVote: finalVote,
         };
       })
     );
-
-    if (!voteUpdate) return;
 
     setSelectedPost((prev) => (
       prev?.id === postId

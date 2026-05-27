@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState } from 'react';
 import { MessageSquare, ChevronUp, ChevronDown, Share2, Clock, Pin, PinOff, Zap, Trash2, UserX } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -8,6 +9,7 @@ export default function PostCard({ post }) {
   const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmBan, setConfirmBan] = useState(false);
+  const commentCount = commentCounts?.[post.id] ?? post.commentCount ?? post.comments?.length ?? 0;
 
   const isOwner = currentUser?.uid && post.authorId === currentUser.uid;
   const canDelete = isOwner || isMod;
@@ -188,7 +190,7 @@ export default function PostCard({ post }) {
             {/* Comments */}
             <div className="flex items-center gap-1.5 text-slate-500">
               <MessageSquare className="w-4 h-4" />
-              <span className="text-sm font-medium">{commentCounts?.[post.id] ?? 0}</span>
+              <span className="text-sm font-medium">{commentCount}</span>
             </div>
           </div>
 
