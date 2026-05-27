@@ -87,9 +87,17 @@ export default function DirectMessagesModal() {
                     style={{ padding: '12px 14px', minWidth: 0, overflow: 'hidden' }}
                   >
                     <div className="flex items-start gap-3" style={{ gap: '12px', minWidth: 0, overflow: 'hidden' }}>
-                      <div className="w-9 h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
-                        {thread.participant.avatar}
-                      </div>
+                      {thread.participant.photoURL ? (
+                        <img
+                          src={thread.participant.photoURL}
+                          alt={thread.participant.name}
+                          className="w-9 h-9 rounded-xl object-cover shrink-0 ring-1 ring-slate-200"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-xl bg-rose-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                          {thread.participant.avatar}
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
                           <p
@@ -164,9 +172,17 @@ export default function DirectMessagesModal() {
             <>
               <div className="px-5 py-3 border-b border-slate-200 bg-white flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
-                    {activeThread.participant.avatar}
-                  </div>
+                  {activeThread.participant.photoURL ? (
+                    <img
+                      src={activeThread.participant.photoURL}
+                      alt={activeThread.participant.name}
+                      className="w-10 h-10 rounded-xl object-cover shrink-0 ring-1 ring-slate-200"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                      {activeThread.participant.avatar}
+                    </div>
+                  )}
                   <div className="min-w-0">
                     <h3
                       className="text-base font-bold text-slate-800 truncate"

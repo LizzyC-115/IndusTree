@@ -103,12 +103,14 @@ export const getOrCreateDmThread = async (currentUserId, otherUserId, otherUserD
         [currentUserId]: {
           name: currentUserData?.name || currentUserData?.username || 'You',
           avatar: currentUserData?.avatar || currentUserData?.username?.[0]?.toUpperCase() || 'U',
+          photoURL: currentUserData?.photoURL || null,
           bio: currentUserData?.bio || 'Student contributor',
           lastRead: new Date().toISOString()
         },
         [otherUserId]: {
           name: otherUserData.name,
           avatar: otherUserData.avatar,
+          photoURL: otherUserData.photoURL || null,
           bio: otherUserData.bio || 'Student contributor',
           yearsOnPlatform: otherUserData.yearsOnPlatform || 1,
           karma: otherUserData.karma || 100

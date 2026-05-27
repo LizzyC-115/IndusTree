@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { X, MessageCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 const getMemberFor = (user) => {
@@ -33,7 +33,7 @@ const StatCell = ({ label, value }) => (
 );
 
 export default function UserProfileModal() {
-  const { selectedProfileUser, closeProfile } = useApp();
+  const { selectedProfileUser, closeProfile, openDmWithUser } = useApp();
 
   if (!selectedProfileUser) return null;
 
@@ -59,18 +59,37 @@ export default function UserProfileModal() {
           </button>
 
           <div className="flex items-center gap-4" style={{ minWidth: 0, overflow: 'hidden' }}>
-            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
-              {selectedProfileUser.avatar}
-            </div>
-            <div style={{ minWidth: 0, overflow: 'hidden' }}>
+            {selectedProfileUser.photoURL ? (
+              <img
+                src={selectedProfileUser.photoURL}
+                alt={selectedProfileUser.name}
+                className="w-16 h-16 rounded-2xl object-cover flex-shrink-0 ring-2 ring-slate-100"
+              />
+            ) : (
+              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+                {selectedProfileUser.avatar}
+              </div>
+            )}
+            <div className="flex-1" style={{ minWidth: 0, overflow: 'hidden' }}>
               <h2 className="text-xl font-bold text-slate-800" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
                 {selectedProfileUser.name}
               </h2>
               {selectedProfileUser.bio && (
-                <p className="text-sm text-slate-500 mt-0.5" style={{ marginTop: '12px', wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                <p className="text-sm text-slate-500 mt-1" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
                   {selectedProfileUser.bio}
                 </p>
               )}
+              <button
+                type="button"
+                onClick={() => {
+                  closeProfile();
+                  openDmWithUser(selectedProfileUser);
+                }}
+                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold rounded-lg transition-colors"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                Message
+              </button>
             </div>
           </div>
         </div>
@@ -78,26 +97,41 @@ export default function UserProfileModal() {
         {/* Stats */}
         <div style={{ padding: '16px 24px 28px', minWidth: 0, overflow: 'hidden' }}>
           {/* Top row: industry, grad year, experience */}
-          <div className="grid grid-cols-3 gap-3 mb-3" style={{ gap: '28px', minWidth: 0, overflow: 'hidden' }}>
+          <div className="grid grid-cols-3 gap-3 mb-3" style={{ gap: '12px', minWidth: 0, overflow: 'hidden' }}>
             <StatCell label="Industry" value={selectedProfileUser.industry} />
             <StatCell label="Grad Year" value={selectedProfileUser.gradYear} />
-            <StatCell
-              label="Experience"
-              value={selectedProfileUser.experienceLevel}
-            />
+            <StatCell label="Experience" value={selectedProfileUser.experienceLevel} />
           </div>
 
-          {/* Bottom row: member for (full width) */}
-          <div
-            className="rounded-2xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100"
-            style={{ padding: '16px 20px', minWidth: 0, overflow: 'hidden' }}
-          >
-            <p className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2">
-              Member for
-            </p>
-            <p className="text-sm font-bold text-indigo-700" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
-              {memberFor}
-            </p>
+          {/* Second row: leaderboard score + member for */}
+          <div className="grid grid-cols-2 gap-3 mb-0" style={{ gap: '12px', minWidth: 0, overflow: 'hidden' }}>
+            <div
+              className="rounded-2xl bg-gradient-to-r from-amber-50 to-rose-50 border border-amber-100"
+              style={{ padding: '16px 20px', minWidth: 0, overflow: 'hidden' }}
+            >
+              <p className="text-xs font-semibold text-amber-500 uppercase tracking-wider mb-2">
+                🏆 Leaderboard Score
+              </p>
+              <p className="text-sm font-bold text-amber-700" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                {typeof selectedProfileUser.karma === 'number'
+                  ? selectedProfileUser.karma > 0
+                    ? `+${selectedProfileUser.karma}`
+                    : `${selectedProfileUser.karma}`
+                  : '—'}
+              </p>
+            </div>
+
+            <div
+              className="rounded-2xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100"
+              style={{ padding: '16px 20px', minWidth: 0, overflow: 'hidden' }}
+            >
+              <p className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2">
+                Member for
+              </p>
+              <p className="text-sm font-bold text-indigo-700" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
+                {memberFor}
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -72,7 +72,7 @@ export default function CreatePostModal() {
       >
         <div className="rounded-2xl border border-slate-100 overflow-hidden" style={{ maxWidth: '100%', overflow: 'hidden', boxSizing: 'border-box', minWidth: 0 }}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100" style={{ padding: '20px 24px', minWidth: 0, overflow: 'hidden' }}>
+        <div className="flex items-center justify-between border-b border-slate-100" style={{ padding: '14px 24px', minWidth: 0, overflow: 'hidden' }}>
           <h2 className="text-xl font-bold text-slate-800" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
             Start a Discussion
           </h2>
@@ -86,7 +86,7 @@ export default function CreatePostModal() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ padding: '24px', minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}>
+        <form onSubmit={handleSubmit} style={{ padding: '18px 24px', minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}>
           {/* Industry */}
           <div className="mb-5" style={{ marginBottom: '18px', minWidth: 0, overflow: 'hidden' }}>
             <label className="block text-sm font-semibold text-slate-700 mb-2" style={{ marginBottom: '8px', wordBreak: 'break-word', overflowWrap: 'break-word', minWidth: 0 }}>
@@ -103,6 +103,9 @@ export default function CreatePostModal() {
                   {cat.name}
                 </option>
               ))}
+              <option disabled>──────────────</option>
+              <option value="miscellaneous">Miscellaneous</option>
+              <option value="mod-reminders">Mod Reminders</option>
             </select>
           </div>
 
@@ -170,7 +173,7 @@ export default function CreatePostModal() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 flex-wrap" style={{ padding: '16px 0 0', minWidth: 0, overflow: 'hidden' }}>
+          <div className="flex items-center justify-end gap-3 flex-wrap" style={{ padding: '12px 0 0', minWidth: 0, overflow: 'hidden' }}>
             <button
               type="button"
               onClick={handleClose}
@@ -182,7 +185,7 @@ export default function CreatePostModal() {
             <button
               type="submit"
               disabled={!title.trim() || !content.trim()}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-8 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ minWidth: 0, overflow: 'hidden' }}
             >
               <Send className="w-4 h-4" />

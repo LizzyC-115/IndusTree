@@ -1,12 +1,24 @@
 import { useState } from 'react';
-import { Bell, MessageCircle, TreePine, LogOut, User } from 'lucide-react';
+import { MessageCircle, TreePine, LogOut, User } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import LeaderboardModal from './LeaderboardModal';
 
 export default function Header({ user, onLogout }) {
-  const { searchQuery, setSearchQuery, dmThreads, openDmInbox, openMyProfile } = useApp();
+  const { searchQuery, setSearchQuery, dmThreads, openDmInbox, openMyProfile, currentUser } = useApp();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+
+  // Count messages from others sent after each thread's lastRead timestamp
+  const unreadCount = dmThreads.reduce((sum, thread) => {
+    const lastRead = thread.myLastRead ? new Date(thread.myLastRead) : new Date(0);
+    const unread = (thread.messages || []).filter(
+      (m) => m.senderId !== currentUser?.uid && new Date(m.createdAt) > lastRead
+    ).length;
+    return sum + unread;
+  }, 0);
 
   return (
+    <>
     <header className="bg-white/80 backdrop-blur-lg border-b border-slate-200/50 sticky top-0 z-50">
       <div className="w-full max-w-screen-2xl mx-auto px-6 sm:px-10 lg:px-14">
         <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 sm:gap-6" style={{ paddingTop: '14px', paddingBottom: '14px' }}>
@@ -41,14 +53,19 @@ export default function Header({ user, onLogout }) {
               title="Direct Messages"
             >
               <MessageCircle className="w-5 h-5" />
-              {dmThreads.length > 0 && (
+              {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
-                  {dmThreads.length}
+                  {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
             </button>
-            <button className="relative p-2 text-slate-500 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all">
-              <Bell className="w-5 h-5" />
+            <button
+              type="button"
+              onClick={() => setShowLeaderboard(true)}
+              className="relative p-2 text-slate-500 hover:text-amber-500 hover:bg-amber-50 rounded-xl transition-all"
+              title="Leaderboard"
+            >
+              <span className="text-xl leading-none">🏆</span>
             </button>
             <div className="relative">
               <button
@@ -97,5 +114,8 @@ export default function Header({ user, onLogout }) {
         </div>
       </div>
     </header>
+
+    <LeaderboardModal isOpen={showLeaderboard} onClose={() => setShowLeaderboard(false)} />
+    </>
   );
 }

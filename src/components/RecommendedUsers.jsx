@@ -8,7 +8,7 @@ export default function RecommendedUsers({ currentUser }) {
   const [allRecommendations, setAllRecommendations] = useState([]);
   const [dismissed, setDismissed] = useState(new Set());
   const [loading, setLoading] = useState(true);
-  const { openDmWithUser } = useApp();
+  const { openDmWithUser, openProfile } = useApp();
 
   useEffect(() => {
     if (!currentUser) return;
@@ -50,15 +50,26 @@ export default function RecommendedUsers({ currentUser }) {
     return score;
   };
 
-  const handleDm = (user) => {
-    openDmWithUser({
-      id: user.id,
-      name: user.username,
-      avatar: user.username?.[0]?.toUpperCase() || 'U',
-      bio: `${user.major || 'Student'}${user.gradYear ? ` '${user.gradYear.slice(-2)}` : ''}`,
-      yearsOnPlatform: 1,
-      karma: user.score || 100,
-    });
+  const buildUserObj = (user) => ({
+    id: user.id,
+    name: user.username,
+    avatar: user.username?.[0]?.toUpperCase() || 'U',
+    photoURL: user.photoURL || null,
+    bio: user.bio || `${user.major || 'Student'}${user.gradYear ? ` '${user.gradYear.slice(-2)}` : ''}`,
+    industry: user.industry || null,
+    gradYear: user.gradYear || null,
+    experienceLevel: user.experienceLevel || null,
+    createdAt: user.createdAt || null,
+    yearsOnPlatform: 1,
+  });
+
+  const handleOpenProfile = (user) => {
+    openProfile(buildUserObj(user));
+  };
+
+  const handleDm = (e, user) => {
+    e.stopPropagation();
+    openDmWithUser(buildUserObj(user));
     setDismissed((prev) => new Set([...prev, user.id]));
   };
 
@@ -106,9 +117,11 @@ export default function RecommendedUsers({ currentUser }) {
         ) : (
           <div className="space-y-0.5">
             {visible.map((user) => (
-              <div
+              <button
                 key={user.id}
-                className="flex items-center gap-3 rounded-xl hover:bg-slate-50 transition-all group"
+                type="button"
+                onClick={() => handleOpenProfile(user)}
+                className="w-full flex items-center gap-3 rounded-xl hover:bg-slate-50 transition-all group text-left"
                 style={{ padding: '4px 7px' }}
               >
                 {/* Avatar */}
@@ -136,14 +149,14 @@ export default function RecommendedUsers({ currentUser }) {
                     </span>
                   )}
                   <button
-                    onClick={() => handleDm(user)}
+                    onClick={(e) => handleDm(e, user)}
                     className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                     title="Send DM"
                   >
                     <MessageCircle className="w-4 h-4" />
                   </button>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}

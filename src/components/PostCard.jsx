@@ -43,6 +43,8 @@ export default function PostCard({ post }) {
       medicine: 'bg-rose-100 text-rose-700',
       academia: 'bg-rose-100 text-rose-700',
       all: 'bg-slate-100 text-slate-700',
+      miscellaneous: 'bg-slate-100 text-slate-700',
+      'mod-reminders': 'bg-amber-100 text-amber-700',
     };
     return colors[category] || colors.all;
   };
@@ -58,6 +60,8 @@ export default function PostCard({ post }) {
       medicine: 'Medicine',
       academia: 'Academia',
       all: 'General',
+      miscellaneous: 'Miscellaneous',
+      'mod-reminders': 'Mod Reminders',
     };
     return names[category] || 'General';
   };
@@ -85,7 +89,7 @@ export default function PostCard({ post }) {
         {/* Top row: avatar + author + category tag | timestamp */}
         <div className="flex items-center justify-between mb-3">
           <UserActionMenu user={postUser}>
-            <div className="flex items-center gap-2.5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2.5">
               {/* Circular avatar — real photo if available, else initial */}
               {post.authorPhotoURL ? (
                 <img
@@ -150,44 +154,47 @@ export default function PostCard({ post }) {
           </div>
         )}
 
-        {/* Bottom row: vote inline + comments + share */}
-        <div className="flex items-center gap-3">
+        {/* Bottom row: evenly distributed across full width */}
+        <div className="flex items-center justify-between">
 
-          {/* Vote controls */}
-          <div
-            className="flex items-center gap-0.5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => votePost(post.id, 'up')}
-              className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+          {/* Left cluster: votes + comments */}
+          <div className="flex items-center gap-3">
+            {/* Vote controls */}
+            <div
+              className="flex items-center gap-0.5"
+              onClick={(e) => e.stopPropagation()}
             >
-              <ChevronUp className="w-4 h-4" />
-            </button>
-            <span
-              className={`text-sm font-bold tabular-nums min-w-[28px] text-center ${
-                post.votes > 0 ? 'text-rose-500' : post.votes < 0 ? 'text-slate-400' : 'text-slate-400'
-              }`}
-            >
-              {post.votes > 0 ? `+${post.votes}` : post.votes}
-            </span>
-            <button
-              onClick={() => votePost(post.id, 'down')}
-              className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-            >
-              <ChevronDown className="w-4 h-4" />
-            </button>
+              <button
+                onClick={() => votePost(post.id, 'up')}
+                className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+              >
+                <ChevronUp className="w-4 h-4" />
+              </button>
+              <span
+                className={`text-sm font-bold tabular-nums min-w-[28px] text-center ${
+                  post.votes > 0 ? 'text-rose-500' : 'text-slate-400'
+                }`}
+              >
+                {post.votes > 0 ? `+${post.votes}` : post.votes}
+              </span>
+              <button
+                onClick={() => votePost(post.id, 'down')}
+                className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+              >
+                <ChevronDown className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Comments */}
+            <div className="flex items-center gap-1.5 text-slate-500">
+              <MessageSquare className="w-4 h-4" />
+              <span className="text-sm font-medium">{commentCounts?.[post.id] ?? 0}</span>
+            </div>
           </div>
 
-          {/* Comments */}
-          <div className="flex items-center gap-1.5 text-slate-500">
-            <MessageSquare className="w-4 h-4" />
-            <span className="text-sm font-medium">{commentCounts?.[post.id] ?? 0}</span>
-          </div>
-
-          {/* Share + Delete — pushed to the right */}
+          {/* Right cluster: Share + mod/owner actions */}
           <div
-            className="relative ml-auto flex items-center gap-1"
+            className="relative flex items-center gap-1"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -209,13 +216,19 @@ export default function PostCard({ post }) {
               </div>
             )}
 
-            {isMod && (
+            {canDelete && (
               <button
-                onClick={handlePin}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all text-sm font-medium text-slate-400 hover:text-amber-600 hover:bg-amber-50"
-                title={post.isPinned ? 'Unpin post' : 'Pin post'}
+                onClick={handleDelete}
+                onBlur={() => setConfirmDelete(false)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all text-sm font-medium ${
+                  confirmDelete
+                    ? 'bg-rose-600 text-white'
+                    : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                }`}
+                title={confirmDelete ? 'Click again to confirm delete' : 'Delete post'}
               >
-                {post.isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
+                <Trash2 className="w-4 h-4" />
+                {confirmDelete ? 'Confirm?' : ''}
               </button>
             )}
 
@@ -233,19 +246,13 @@ export default function PostCard({ post }) {
               </button>
             )}
 
-            {canDelete && (
+            {isMod && (
               <button
-                onClick={handleDelete}
-                onBlur={() => setConfirmDelete(false)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all text-sm font-medium ${
-                  confirmDelete
-                    ? 'bg-rose-600 text-white'
-                    : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
-                }`}
-                title={confirmDelete ? 'Click again to confirm delete' : 'Delete post'}
+                onClick={handlePin}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all text-sm font-medium text-slate-400 hover:text-amber-600 hover:bg-amber-50"
+                title={post.isPinned ? 'Unpin post' : 'Pin post'}
               >
-                <Trash2 className="w-4 h-4" />
-                {confirmDelete ? 'Confirm?' : ''}
+                {post.isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
               </button>
             )}
           </div>
