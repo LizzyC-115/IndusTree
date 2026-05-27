@@ -1,14 +1,12 @@
 /* eslint-disable react/prop-types */
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { initialPosts } from '../data/mockData';
 import { subscribeToDmThreads, getOrCreateDmThread, sendDmMessage as sendFirebaseDm, markThreadAsRead } from '../firebase/dms';
-import { subscribeToPosts, createPost as createFirebasePost, updatePostVote, deletePost as deleteFirebasePost, modDeletePost as modDeleteFirebasePost, pinPost as pinFirebasePost, subscribeToCommunityRules, updateCommunityRules as updateFirebaseCommunityRules } from '../firebase/posts';
-import { subscribeToDmThreads, getOrCreateDmThread, sendDmMessage as sendFirebaseDm } from '../firebase/dms';
 import { subscribeToPosts, createPost as createFirebasePost, deletePost as deleteFirebasePost, modDeletePost as modDeleteFirebasePost, pinPost as pinFirebasePost, subscribeToCommunityRules, updateCommunityRules as updateFirebaseCommunityRules } from '../firebase/posts';
 import { getUserByUsername, banUser as banFirebaseUser } from '../firebase/auth';
-import { saveComment, deleteComment as deleteFirebaseComment } from '../firebase/comments';
+import { saveComment, subscribeToCommentCounts, deleteComment as deleteFirebaseComment } from '../firebase/comments';
 import { savePost, unsavePost, getSavedPosts } from '../firebase/saves';
-import { getUserVotes, persistVote } from '../firebase/votes';
+import { getUserVotes, persistVote, subscribeToVoteTotals } from '../firebase/votes';
 
 const AppContext = createContext();
 
@@ -36,6 +34,8 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
   const [savedPostIds, setSavedPostIds] = useState(new Set());
   // communityRules: { [industry]: rules[] | null }  null = use defaults
   const [communityRules, setCommunityRules] = useState({});
+  const userVotesRef = useRef({});
+  const voteTotalsRef = useRef({});
 
   // Subscribe to DM threads when user is authenticated
   useEffect(() => {
@@ -112,22 +112,13 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
       hasLoaded = true;
       clearTimeout(timeout);
       console.log('📝 Posts loaded from Firestore:', firestorePosts.length);
-      setPosts((prevPosts) => {
-        const existingVotes = new Map(
-          prevPosts.map((post) => [String(post.id), post.userVote || 0]),
-        );
+      setPosts(() => {
         return firestorePosts.map((post) => ({
           ...post,
-          userVote: existingVotes.get(String(post.id)) || 0,
+          votes: voteTotalsRef.current[String(post.id)] ?? post.votes ?? 0,
+          userVote: userVotesRef.current[String(post.id)] || 0,
         }));
       });
-      
-      // Update comment counts from Firestore posts
-      const counts = {};
-      firestorePosts.forEach(post => {
-        counts[post.id] = post.commentCount || post.comments?.length || 0;
-      });
-      setCommentCounts(counts);
     });
 
     return () => {
@@ -137,9 +128,33 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
     };
   }, []);
 
+  // Vote totals come from the top-level votes collection so nonmods do not need
+  // permission to update the post document itself.
+  useEffect(() => {
+    return subscribeToVoteTotals((totals) => {
+      voteTotalsRef.current = totals;
+      setPosts((prevPosts) => prevPosts.map((post) => ({
+        ...post,
+        votes: totals[String(post.id)] ?? 0,
+      })));
+    });
+  }, []);
+
+  const postIdsKey = posts.map((post) => String(post.id)).join('|');
+
+  // Comment counts come from each post's comments subcollection, which makes
+  // existing posts accurate even if their denormalized commentCount field is stale.
+  useEffect(() => {
+    const postIds = postIdsKey ? postIdsKey.split('|') : [];
+    return subscribeToCommentCounts(postIds, (counts) => {
+      setCommentCounts((prev) => ({ ...prev, ...counts }));
+    });
+  }, [postIdsKey]);
+
   // Keep each post's current user's vote state after refresh/realtime updates.
   useEffect(() => {
     if (!currentUser?.uid) {
+      userVotesRef.current = {};
       setPosts((prevPosts) => prevPosts.map((post) => ({ ...post, userVote: 0 })));
       return;
     }
@@ -150,6 +165,7 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
         votes.forEach((vote) => {
           nextVotes[String(vote.postId || vote.id)] = vote.vote || 0;
         });
+        userVotesRef.current = nextVotes;
         setPosts((prevPosts) => prevPosts.map((post) => ({
           ...post,
           userVote: nextVotes[String(post.id)] || 0,
@@ -210,6 +226,8 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
   };
 
   const votePost = (postId, direction) => {
+    let voteUpdate = null;
+
     setPosts((prevPosts) =>
       prevPosts.map((post) => {
         if (post.id !== postId) return post;
@@ -221,10 +239,7 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
         const finalVote = currentVote === nextVote ? 0 : nextVote;
         const voteDelta = finalVote - currentVote;
 
-        // Persist to Firebase in the background (non-blocking)
-        if (currentUser?.uid) {
-          persistVote(currentUser.uid, post, finalVote).catch(() => {});
-        }
+        voteUpdate = { post, finalVote, voteDelta };
 
         return {
           ...post,
@@ -233,6 +248,50 @@ export function AppProvider({ children, currentUser, onUserUpdate }) {
         };
       })
     );
+
+    if (!voteUpdate) return;
+
+    setSelectedPost((prev) => (
+      prev?.id === postId
+        ? {
+            ...prev,
+            votes: prev.votes + voteUpdate.voteDelta,
+            userVote: voteUpdate.finalVote,
+          }
+        : prev
+    ));
+
+    if (currentUser?.uid) {
+      userVotesRef.current = {
+        ...userVotesRef.current,
+        [String(postId)]: voteUpdate.finalVote,
+      };
+      persistVote(currentUser.uid, voteUpdate.post, voteUpdate.finalVote).catch((error) => {
+        console.error('Error persisting vote:', error);
+        userVotesRef.current = {
+          ...userVotesRef.current,
+          [String(postId)]: voteUpdate.post.userVote || 0,
+        };
+        setPosts((prevPosts) => prevPosts.map((post) => (
+          post.id === postId
+            ? {
+                ...post,
+                votes: post.votes - voteUpdate.voteDelta,
+                userVote: voteUpdate.post.userVote || 0,
+              }
+            : post
+        )));
+        setSelectedPost((prev) => (
+          prev?.id === postId
+            ? {
+                ...prev,
+                votes: prev.votes - voteUpdate.voteDelta,
+                userVote: voteUpdate.post.userVote || 0,
+              }
+            : prev
+        ));
+      });
+    }
   };
 
   const toggleSave = async (post) => {

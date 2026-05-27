@@ -1,8 +1,8 @@
 import {
-  collection, onSnapshot, query,
+  addDoc, collection, onSnapshot, query,
   orderBy, serverTimestamp, getCountFromServer,
-  collectionGroup, where, limit, getDocs, doc,
-  runTransaction, increment,
+  collectionGroup, where, limit, getDocs, deleteDoc, doc,
+  updateDoc, increment,
 } from 'firebase/firestore';
 import { db } from './config';
 
@@ -17,24 +17,26 @@ const toTimeAgo = (date) => {
 export const saveComment = async (postId, { content, authorUid, authorName, authorAvatar, authorPhotoURL }) => {
   const normalizedPostId = String(postId);
   const postRef = doc(db, 'posts', normalizedPostId);
-  const commentRef = doc(collection(db, 'posts', normalizedPostId, 'comments'));
-  await runTransaction(db, async (transaction) => {
-    transaction.set(commentRef, {
-      postId: normalizedPostId,
-      content,
-      authorUid,
-      authorName,
-      authorAvatar: authorAvatar || authorName?.[0]?.toUpperCase() || '?',
-      authorPhotoURL: authorPhotoURL || null,
-      votes: 0,
-      createdAt: serverTimestamp(),
-    });
-    transaction.update(postRef, {
-      commentCount: increment(1),
-      newComments: increment(1),
-      updatedAt: serverTimestamp(),
-    });
+  const commentRef = await addDoc(collection(db, 'posts', normalizedPostId, 'comments'), {
+    postId: normalizedPostId,
+    content,
+    authorUid,
+    authorName,
+    authorAvatar: authorAvatar || authorName?.[0]?.toUpperCase() || '?',
+    authorPhotoURL: authorPhotoURL || null,
+    votes: 0,
+    createdAt: serverTimestamp(),
   });
+
+  updateDoc(postRef, {
+    commentCount: increment(1),
+    newComments: increment(1),
+    updatedAt: serverTimestamp(),
+  }).catch(() => {
+    // Non-authors may not be allowed to update the parent post; live comment counts
+    // come from the comments subcollection, so this denormalized field is best effort.
+  });
+
   return commentRef;
 };
 
@@ -100,16 +102,38 @@ export const deleteComment = async (postId, commentId) => {
   const normalizedPostId = String(postId);
   const postRef = doc(db, 'posts', normalizedPostId);
   const commentRef = doc(db, 'posts', normalizedPostId, 'comments', commentId);
-  await runTransaction(db, async (transaction) => {
-    const commentSnap = await transaction.get(commentRef);
-    if (!commentSnap.exists()) return;
-
-    transaction.delete(commentRef);
-    transaction.update(postRef, {
-      commentCount: increment(-1),
-      updatedAt: serverTimestamp(),
-    });
+  await deleteDoc(commentRef);
+  updateDoc(postRef, {
+    commentCount: increment(-1),
+    updatedAt: serverTimestamp(),
+  }).catch(() => {
+    // See saveComment: the subcollection is the source of truth for counts.
   });
+};
+
+export const subscribeToCommentCounts = (postIds, callback) => {
+  if (!postIds.length) {
+    callback({});
+    return () => {};
+  }
+
+  const counts = {};
+  const unsubscribes = postIds.map((postId) => (
+    onSnapshot(
+      collection(db, 'posts', String(postId), 'comments'),
+      (snapshot) => {
+        counts[String(postId)] = snapshot.size;
+        callback({ ...counts });
+      },
+      (error) => {
+        console.error('Comment count subscription error:', error.code, error.message);
+        counts[String(postId)] = 0;
+        callback({ ...counts });
+      },
+    )
+  ));
+
+  return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
 };
 
 export const getCommentCounts = async (postIds) => {
