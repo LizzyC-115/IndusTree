@@ -14,10 +14,13 @@ import PostDetail from './components/PostDetail';
 import DirectMessagesModal from './components/DirectMessagesModal';
 import UserProfileModal from './components/UserProfileModal';
 import MyProfileModal from './components/MyProfileModal';
+import WelcomeGuideModal from './components/WelcomeGuideModal';
+import { updateUserProfile } from './firebase/auth';
 
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isWelcomeGuideOpen, setIsWelcomeGuideOpen] = useState(false);
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -35,6 +38,16 @@ function App() {
 
   const handleProfileComplete = (updatedUser) => {
     setUser(updatedUser);
+  };
+
+  const handleWelcomeGuideClose = async () => {
+    if (!user?.uid) return;
+    setIsWelcomeGuideOpen(false);
+    setUser((current) => ({ ...current, welcomeGuideSeen: true }));
+    const result = await updateUserProfile(user.uid, { welcomeGuideSeen: true });
+    if (!result.success) {
+      console.error('Failed to save welcome guide status:', result.error);
+    }
   };
 
   // Listen for auth state changes (persists login across refreshes)
@@ -97,7 +110,10 @@ function App() {
   return (
     <AppProvider currentUser={user} onUserUpdate={setUser}>
       <div className="h-screen flex flex-col bg-white overflow-hidden">
-        <Header user={user} onLogout={handleLogout} />
+        <Header
+          user={user}
+          onLogout={handleLogout}
+        />
 
         {/* Main layout — fills remaining viewport height, no outer scroll */}
         <div className="flex-1 overflow-hidden">
@@ -124,6 +140,16 @@ function App() {
         <DirectMessagesModal />
         <UserProfileModal />
         <MyProfileModal />
+        <button
+          type="button"
+          onClick={() => setIsWelcomeGuideOpen(true)}
+          className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full border border-rose-100 bg-white px-4 py-3 text-sm font-bold text-rose-600 shadow-xl shadow-slate-900/10 transition-all hover:-translate-y-0.5 hover:bg-rose-50 hover:shadow-rose-500/20"
+        >
+          Welcome Guide
+        </button>
+        {(isWelcomeGuideOpen || user.welcomeGuideSeen === false) && (
+          <WelcomeGuideModal onClose={handleWelcomeGuideClose} />
+        )}
       </div>
     </AppProvider>
   );

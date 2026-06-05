@@ -43,7 +43,8 @@ export default function Auth({ onLogin }) {
           return;
         }
         const result = await signUp(formData.email, formData.password, formData.username, {
-          profileComplete: false
+          profileComplete: false,
+          welcomeGuideSeen: false,
         });
         if (result.success) {
           onLogin(result.user);
